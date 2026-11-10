@@ -1,0 +1,1730 @@
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --navy-950: #0a1120;
+  --navy-900: #0e1a2e;
+  --navy-800: #142642;
+  --navy-700: #1c3358;
+  --navy-line: #26385a;
+  --ink-100: #eef1f6;
+  --ink-300: #b7c1d1;
+  --ink-500: #7e8ba1;
+  --amber: #e8a33d;
+  --amber-dark: #c5811f;
+  --amber-soft: rgba(232, 163, 61, 0.14);
+  --success: #4caf6d;
+  --danger: #e2574c;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--navy-950);
+  color: var(--ink-100);
+}
+
+/* Page still scrolls normally - just without the browser's default bar,
+   so the dark UI isn't interrupted by a light native scrollbar. */
+html {
+  scrollbar-width: none;    /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+html::-webkit-scrollbar { display: none; } /* Chrome/Safari/Opera */
+
+h1, h2, h3, .display {
+  font-family: 'Big Shoulders Display', sans-serif;
+  letter-spacing: 0.01em;
+  font-weight: 700;
+  margin: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ---------- Login page ---------- */
+.login-shell {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  display: block;
+  background: var(--navy-950);
+  overflow: hidden;
+}
+
+/* Full-page background photo with reduced opacity */
+.login-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('../images/login_bg.jpg') center / cover no-repeat;
+  opacity: 0.35;
+  z-index: 0;
+}
+
+/* Dark gradient over the photo so the card stays readable */
+.login-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(232,163,61,0.10), transparent 45%),
+    linear-gradient(160deg, rgba(14,26,46,0.55), rgba(10,17,32,0.75) 65%);
+  z-index: 0;
+}
+
+.login-shell > * { position: relative; z-index: 1; }
+
+/* Lightning animation sits above the photo/gradient but below the login card */
+.login-shell > .lightning-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 860px) {
+  .login-hero { display: none; }
+}
+
+/* "Developed by" credit pinned to the bottom of the login page. The logo has
+   dark-blue letters, so it sits on a white chip (like the DutyWatch logo
+   above the card) to stay readable on the dark background. */
+.login-shell > .developed-by {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.developed-by span {
+  font-size: 12.5px;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.developed-by img {
+  height: 32px;
+  width: auto;
+  padding: 4px 12px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+/* Keep the card clear of the footer. */
+.login-shell:has(.developed-by) .login-panel { padding-bottom: 68px; }
+@media (max-height: 640px) {
+  .login-shell > .developed-by { bottom: 8px; }
+  .developed-by img { height: 24px; padding: 3px 10px; }
+  .login-shell:has(.developed-by) .login-panel { padding-bottom: 50px; }
+}
+
+.login-hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 32px 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-hero .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy-950);
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.login-hero .headline {
+  font-size: 56px;
+  line-height: 1.02;
+  color: var(--ink-100);
+  max-width: 9ch;
+}
+
+.login-hero .headline em {
+  font-style: normal;
+  color: var(--amber);
+}
+
+.login-hero .sub {
+  color: var(--ink-300);
+  font-size: 15px;
+  max-width: 38ch;
+  line-height: 1.6;
+  margin-top: 18px;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 36px;
+  border-top: 1px solid var(--navy-line);
+  padding-top: 24px;
+}
+
+.hero-stats .stat b {
+  display: block;
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 30px;
+  color: var(--amber);
+}
+.hero-stats .stat span {
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+}
+
+/* Login page never scrolls */
+html:has(.login-shell), body:has(.login-shell) {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* On short screens, tighten the card so it fits without scrolling */
+@media (max-height: 700px) {
+  .login-card { padding: 20px 24px; }
+  .login-icon { transform: scale(0.85); margin-bottom: 4px; }
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 36px 32px;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 480px) {
+  .login-card { padding: 28px 20px; }
+}
+
+.login-icon {
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 18px;
+  padding: 10px;
+  border-radius: 20px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.login-brand {
+  text-align: center;
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 22px;
+}
+
+.login-card h2 {
+  font-size: 26px;
+  color: var(--ink-100);
+  text-align: center;
+}
+
+.login-card .lead {
+  color: var(--ink-500);
+  font-size: 13.5px;
+  text-align: center;
+  margin: 6px 0 28px;
+}
+
+.field { margin-bottom: 16px; }
+
+.field label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-300);
+  margin-bottom: 6px;
+}
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--navy-line);
+  background: var(--navy-800);
+  color: var(--ink-100);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.input-icon { position: relative; }
+.input-icon .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-500);
+  pointer-events: none;
+}
+.input-icon input { padding-left: 42px; }
+/* Hide the browser's built-in password reveal / clear icons (Edge, Chrome) so only our toggle shows */
+input::-ms-reveal,
+input::-ms-clear { display: none; }
+input::-webkit-credentials-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; }
+
+.input-icon .pw-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+.input-icon .pw-toggle:hover { color: var(--amber); }
+.input-icon:has(.pw-toggle) input { padding-right: 46px; }
+.input-icon:focus-within .field-icon { color: var(--amber); }
+
+.field textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-primary { background: var(--amber); color: var(--navy-950); width: 100%; }
+.btn-primary:hover { background: var(--amber-dark); }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--navy-line);
+  color: var(--ink-100);
+}
+.btn-outline:hover { border-color: var(--amber); color: var(--amber); }
+/* Disabled (e.g. Previous on page 1, Next on the last page): dimmed, no hover highlight, not clickable. */
+.btn:disabled,
+.btn-outline:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-outline:disabled:hover { border-color: var(--navy-line); color: inherit; }
+
+.error-text { color: var(--danger); font-size: 12.5px; margin-top: 6px; min-height: 16px; }
+
+/* ---------- Forgot Password link + modal ---------- */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 16px;
+}
+.forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--amber);
+  cursor: pointer;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.fp-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.fp-step {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--navy-line);
+}
+.fp-step.is-done, .fp-step.is-active { background: var(--amber); }
+
+.fp-hint { font-size: 12.5px; color: var(--ink-500); margin: -8px 0 16px; line-height: 1.5; }
+.fp-success-text { color: #3fbf6f; font-size: 12.5px; margin-top: 6px; min-height: 16px; }
+
+.fp-resend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--ink-500);
+  margin: -8px 0 16px;
+}
+.fp-resend-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--amber);
+  cursor: pointer;
+}
+.fp-resend-link:disabled { color: var(--ink-500); cursor: not-allowed; }
+
+.demo-box {
+  margin-top: 22px;
+  padding: 12px 14px;
+  background: var(--navy-800);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  color: var(--ink-500);
+  line-height: 1.6;
+}
+.demo-box b { color: var(--ink-300); }
+
+/* ---------- Dashboard shell ---------- */
+.app-shell {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { display: none; }
+  .sidebar.open { display: flex; position: fixed; z-index: 20; height: 100vh; width: 250px; }
+}
+
+.sidebar {
+  background: var(--navy-900);
+  border-right: 1px solid var(--navy-line);
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 22px;
+  border-bottom: 1px solid var(--navy-line);
+  margin-bottom: 16px;
+}
+
+.sidebar .brand span { font-size: 14px; font-weight: 700; font-family: 'Big Shoulders Display', sans-serif; }
+
+.nav-group-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-500);
+  padding: 14px 12px 6px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--ink-300);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.nav-link:hover { background: var(--navy-800); color: var(--ink-100); }
+.nav-link.active { background: var(--amber-soft); color: var(--amber); font-weight: 600; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--navy-line);
+}
+
+.main {
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.topbar {
+  display: flex;
+  height: 64px;
+  border-bottom: 1px solid var(--navy-line);
+  align-items: center;
+  padding: 0 26px;
+  background: var(--navy-950);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* Only needed on mobile, where the sidebar (and its own name/avatar) is
+   hidden until the hamburger button opens it. */
+/* Admin: the topbar is always visible (menu button left, theme toggle right).
+   The user/guard page has no menu button, so its topbar stays mobile-only. */
+body:not(.has-topbar) .topbar { display: none; }
+@media (max-width: 900px) { body:not(.has-topbar) .topbar { display: flex; } }
+
+.topbar .who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-300);
+  margin-left: auto; /* stays pinned to the right whether or not the mobile menu-toggle is showing */
+}
+
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--amber); color: var(--navy-950);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px;
+  overflow: hidden; flex-shrink: 0;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-lg { width: 44px; height: 44px; font-size: 18px; }
+.avatar-xl { width: 96px; height: 96px; font-size: 34px; }
+
+/* Guard sidebar header: profile photo + logged-in guard's name */
+.sidebar .guard-brand { min-width: 0; }
+.guard-brand-text { display: flex; flex-direction: column; min-width: 0; }
+.sidebar .guard-brand .guard-name {
+  font-size: 15px; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.guard-brand-text small { font-size: 11.5px; color: var(--ink-500); margin-top: 2px; }
+
+.content { padding: 26px; }
+
+.section-head { margin-bottom: 22px; }
+.section-head h2 { font-size: 22px; color: var(--ink-100); }
+.section-head p { color: var(--ink-500); font-size: 13.5px; margin-top: 5px; }
+
+.grid-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.stat-card {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.stat-card .num { font-family: 'Big Shoulders Display', sans-serif; font-size: 32px; color: var(--amber); }
+.stat-card .label { font-size: 12.5px; color: var(--ink-500); margin-top: 4px; }
+
+.card {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+.card-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-500);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--navy-line);
+}
+td {
+  padding: 12px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--navy-line);
+  color: var(--ink-100);
+}
+tr:last-child td { border-bottom: none; }
+
+/* Scrollable table body with a header that stays put while you scroll.
+   Wrap a <table> in a .table-scroll div to get this. */
+.table-scroll {
+  max-height: calc(100vh - 330px);
+  min-height: 240px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 8px;
+  scrollbar-width: none;       /* Firefox: hide scrollbar, keep scrolling */
+  -ms-overflow-style: none;    /* old Edge/IE: hide scrollbar, keep scrolling */
+}
+.table-scroll::-webkit-scrollbar {
+  display: none;               /* Chrome/Safari/Opera: hide scrollbar, keep scrolling */
+}
+.table-scroll table { border-collapse: separate; border-spacing: 0; }
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--navy-900);
+  box-shadow: 0 1px 0 var(--navy-line);
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.badge-success { background: rgba(76,175,109,0.15); color: var(--success); }
+.badge-danger { background: rgba(226,87,76,0.15); color: var(--danger); }
+.badge-amber { background: var(--amber-soft); color: var(--amber); }
+
+.chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid var(--navy-line);
+  border-radius: 20px;
+  font-size: 11.5px;
+  color: var(--ink-300);
+  margin: 3px 4px 3px 0;
+  white-space: pre-wrap; /* keep multiple spaces inside a name visible instead of HTML collapsing them */
+}
+
+/* Applied to any text pulled straight from the database (place/sub-place
+   names) so runs of spaces the admin typed are shown exactly as entered. */
+.preserve-space { white-space: pre-wrap; }
+
+.progress-track {
+  height: 7px;
+  background: var(--navy-800);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.progress-fill { height: 100%; background: var(--amber); }
+.progress-fill.complete { background: var(--success); }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 18px;
+}
+@media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+.image-tile {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.image-tile .ph {
+  height: 100px;
+  background: var(--navy-800);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-500);
+  font-size: 22px;
+}
+.image-tile .ph.viewable {
+  position: relative;
+  cursor: pointer;
+}
+.image-tile .ph.viewable img { transition: opacity 0.15s ease; }
+.image-tile .ph.viewable:hover img { opacity: 0.85; }
+.image-tile .dl-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 17, 32, 0.72);
+  border: 1px solid var(--navy-line);
+  border-radius: 8px;
+  color: var(--ink-100);
+  font-size: 14px;
+  text-decoration: none;
+  line-height: 1;
+}
+.image-tile .dl-btn:hover { background: var(--amber); color: var(--navy-900); border-color: var(--amber); }
+.image-tile .meta { padding: 10px 12px; }
+.image-tile .meta b { font-size: 12.5px; display: block; }
+.image-tile .meta span { font-size: 11px; color: var(--ink-500); }
+.image-tile .meta p.comment {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-300);
+  font-style: italic;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Images > Get Upload Images: date headings, date cards, and the per-date page */
+.img-date-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+.img-date-head h3 { font-size: 18px; }
+.img-date-head span { font-size: 12.5px; color: var(--ink-500); }
+.img-detail-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+
+.date-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+.date-card {
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.date-card:hover { border-color: var(--amber); transform: translateY(-2px); }
+.date-card-cover {
+  height: 132px;
+  background: var(--navy-800);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+}
+.mosaic-thumb { position: relative; overflow: hidden; background: var(--navy-800); min-height: 0; }
+.mosaic-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.92; }
+.mosaic-more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 17, 32, 0.68);
+  color: var(--ink-100);
+  font-size: 15px;
+  font-weight: 700;
+}
+.date-card-body { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; }
+.date-card-body b { display: block; font-size: 13.5px; }
+.date-card-body span { font-size: 11.5px; color: var(--ink-500); }
+.date-card-body .chev { color: var(--amber); font-size: 22px; line-height: 1; }
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--navy-line);
+  color: var(--ink-300);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.icon-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.menu-toggle {
+  display: inline-flex;
+  background: transparent;
+  border: 1px solid var(--navy-line);
+  color: var(--ink-100);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.menu-toggle:hover { border-color: var(--amber); color: var(--amber); }
+
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--ink-500);
+}
+
+/* ---------- Get Security Data: search + pagination ---------- */
+.data-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.data-toolbar .search-field {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+.data-toolbar .search-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--navy-line);
+  background: var(--navy-800);
+  color: var(--ink-100);
+  font-size: 13.5px;
+  font-family: inherit;
+}
+.data-toolbar .search-field input:focus { outline: none; border-color: var(--amber); }
+.data-toolbar .page-size-field { display: flex; align-items: center; gap: 8px; }
+.data-toolbar .page-size-field label { font-size: 12.5px; color: var(--ink-500); white-space: nowrap; }
+/* Groups the page-size control and a download/action button together on
+   the right-hand side of a data-toolbar, e.g. Existing Duty Places. */
+.data-toolbar .toolbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.data-toolbar select {
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--navy-line);
+  background: var(--navy-800);
+  color: var(--ink-100);
+  font-size: 13.5px;
+  font-family: inherit;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--navy-line);
+}
+.pagination-bar .page-info { font-size: 12.5px; color: var(--ink-500); }
+.pagination-bar .page-controls { display: flex; gap: 8px; }
+
+.serial-col { color: var(--ink-500); width: 40px; }
+
+/* ---------- Tabs (used by Add Duty Places) ---------- */
+.tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--navy-line);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-500);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--ink-100); }
+.tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+/* Printed-card look for the Generate QR Code preview: a rounded black
+   frame around the QR image, matching the physical signage cards. */
+.qr-frame {
+  display: inline-block;
+  padding: 16px;
+  border: 4px solid #0f0f0f;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+/* Small "x" inside a pending chip, to remove it before saving */
+.chip-remove { color: var(--ink-500); font-weight: 700; }
+.chip-remove:hover { color: var(--danger); }
+
+/* ---------- Duty Status > Assign Duty to Guard: drag-and-drop board ---------- */
+.assign-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .assign-board { grid-template-columns: 1fr; } }
+
+.assign-col { min-height: 320px; }
+.assign-hint { font-size: 11.5px; color: var(--ink-500); margin-bottom: 10px; }
+.assign-list { display: flex; flex-direction: column; gap: 8px; max-height: 460px; overflow-y: auto; }
+
+.assign-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--navy-line);
+  border-radius: 8px;
+  background: var(--navy-800);
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+}
+.assign-item:active { cursor: grabbing; }
+.assign-item .idx { color: var(--ink-500); font-size: 11.5px; min-width: 18px; }
+.assign-item.used { opacity: 0.45; cursor: not-allowed; }
+
+.assign-dropzone {
+  min-height: 200px;
+  border: 1px dashed var(--navy-line);
+  border-radius: 10px;
+  padding: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.assign-dropzone.drag-over { border-color: var(--amber); background: rgba(232, 163, 61, 0.06); }
+
+.duty-mini-card {
+  position: relative;
+  border: 1px solid var(--navy-line);
+  border-radius: 10px;
+  padding: 10px 32px 10px 12px;
+  background: var(--navy-800);
+}
+.duty-mini-card .remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--ink-500);
+  cursor: pointer;
+  font-size: 13px;
+}
+.duty-mini-card .remove-btn:hover { color: var(--danger); }
+.duty-mini-card .mini-place { font-weight: 700; font-size: 13.5px; margin-bottom: 6px; }
+.duty-mini-card .mini-guard-slot {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border: 1px dashed var(--navy-line);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.duty-mini-card .mini-guard-slot.filled {
+  border-style: solid;
+  color: var(--ink-100);
+  text-align: left;
+  font-weight: 600;
+}
+.duty-mini-card .mini-guard-slot.drag-over { border-color: var(--amber); }
+
+/* An already-committed duty (loaded from the DB for the picked date) shown
+   in the drop zone alongside new ones being built - locked, no remove
+   button, visually distinct so it reads as "already saved". */
+.duty-mini-card.existing-duty { border-color: var(--success); background: rgba(76,175,109,0.06); }
+.duty-mini-card .existing-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--success);
+  margin-bottom: 6px;
+}
+
+/* Always-visible placeholder at the bottom of the drop zone so it's clear
+   there's room to drag in another duty, even once cards are already there. */
+.assign-dropzone-hint {
+  border: 1px dashed var(--navy-line);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-500);
+  margin-top: 8px;
+}
+
+/* Small search box above a draggable list (Main Places / Guards columns) */
+.mini-search {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--navy-line);
+  background: var(--navy-800);
+  color: var(--ink-100);
+  font-size: 12.5px;
+  font-family: inherit;
+}
+.mini-search:focus { outline: none; border-color: var(--amber); }
+
+.badge-neutral { background: rgba(255,255,255,0.08); color: var(--ink-300); }
+
+/* Date-filter input outside a .data-toolbar (e.g. Recent QR Scans card header) */
+.recent-scans-date {
+  color-scheme: dark;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--navy-line);
+  background: var(--navy-800);
+  color: var(--ink-100);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.recent-scans-date:focus { outline: none; border-color: var(--amber); }
+
+/* ---------- Home: Recent QR Scans table (bordered grid + merged serial cells) ---------- */
+.recent-scans-table {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 1280px; /* sum of colgroup widths - scrolls horizontally below this */
+}
+.recent-scans-table th,
+.recent-scans-table td {
+  border: 1px solid var(--navy-line);
+}
+/* Status pill, scan-timeline chips and geo-coordinate chips (one fixed-height slot per scan, so
+   the Scanned At and Geo-Coordinates cells line up row by row) */
+.recent-scans-table .status-col { text-align: center; vertical-align: middle; }
+.recent-scans-table td.status-col { padding-left: 8px; padding-right: 8px; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid var(--navy-line);
+}
+.status-pill.is-scanned { color: #4ade80; background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.45); }
+.status-pill.is-pending { color: var(--ink-300); background: rgba(255, 255, 255, 0.05); }
+
+.recent-scans-table .scan-slot { height: 34px; }
+.recent-scans-table .scan-none { color: var(--ink-500); line-height: 28px; padding-left: 4px; }
+.scan-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: var(--navy-950);
+  border: 1px solid var(--navy-line);
+  color: var(--ink-100);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.scan-chip svg { flex-shrink: 0; color: #5aa9ff; }
+.scan-chip.is-located { color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+.scan-chip.is-located svg { color: #4ade80; }
+.scan-chip.geo-chip {
+  background: #122447;
+  border-color: #27457a;
+  color: #5fdcff;
+  text-decoration: none;
+  cursor: pointer;
+}
+.scan-chip.geo-chip svg { color: #5fdcff; }
+.scan-chip.geo-chip:hover { border-color: #5fdcff; background: #16305c; }
+.recent-scans-table thead th { border-top: none; }
+.recent-scans-table tr:first-child td { border-top: none; }
+.recent-scans-table tr td.grp-first,
+.recent-scans-table tr th:first-child { border-left: none; }
+/* keep the closing line under the last row (the global rule removes it) */
+.recent-scans-table tbody tr:last-child td { border-bottom: 1px solid var(--navy-line); }
+.recent-scans-table tr td:last-child,
+.recent-scans-table tr th:last-child { border-right: none; }
+
+/* Date-filter input dropped into a .data-toolbar alongside the search box */
+.data-toolbar input[type="date"] {
+  color-scheme: dark; /* light calendar icon + dark popup, otherwise the icon is invisible on navy */
+  cursor: pointer;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--navy-line);
+  background: var(--navy-800);
+  color: var(--ink-100);
+  font-size: 13px;
+  font-family: inherit;
+}
+.data-toolbar input[type="date"]:focus { outline: none; border-color: var(--amber); }
+.clear-date-link {
+  font-size: 12px;
+  color: var(--ink-500);
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.clear-date-link:hover { color: var(--amber); }
+
+/* ---------- Add Security: CSV bulk upload ---------- */
+.bulk-upload-box {
+  border: 1px dashed var(--navy-line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 18px;
+}
+.bulk-upload-box .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.bulk-upload-box input[type="file"] {
+  color: var(--ink-300);
+  font-size: 13px;
+  flex: 1;
+  min-width: 180px;
+}
+.bulk-result-list {
+  margin-top: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 12.5px;
+}
+.bulk-result-list .row-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--navy-line);
+}
+
+/* ---------- Get Security Data: row actions ---------- */
+.badge-blocked { background: rgba(226,87,76,0.15); color: var(--danger); }
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.row-actions button {
+  background: transparent;
+  border: 1px solid var(--navy-line);
+  color: var(--ink-300);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.row-actions .edit-btn:hover { color: var(--amber); border-color: var(--amber); }
+.row-actions .block-btn:hover { color: var(--danger); border-color: var(--danger); }
+.row-actions .unblock-btn:hover { color: var(--success); border-color: var(--success); }
+.row-actions .delete-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 0;
+}
+.avatar-btn .avatar { transition: box-shadow 0.15s; }
+.avatar-btn:hover .avatar,
+.avatar-btn:focus-visible .avatar { box-shadow: 0 0 0 2px var(--amber); }
+
+/* ---------- Modal (used for editing an account) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 17, 32, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-box h3 {
+  font-size: 18px;
+  color: var(--ink-100);
+  margin-bottom: 16px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ---------- Image preview modal (Get Upload Images "tap to open") ---------- */
+.image-preview-modal img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--navy-800);
+  display: block;
+}
+.image-preview-modal .meta {
+  margin-top: 14px;
+}
+.image-preview-modal .meta b { font-size: 14px; display: block; }
+.image-preview-modal .meta span { font-size: 12px; color: var(--ink-500); }
+.image-preview-modal .meta p.comment {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ink-300);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Rounded "pill" rows-per-page control (guard panel's Home > My Duties). */
+.pill-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--navy-800);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23e8a33d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  color: var(--ink-100);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 32px 8px 16px;
+  cursor: pointer;
+}
+.pill-select:focus { outline: none; box-shadow: 0 0 0 2px rgba(232, 163, 61, 0.25); }
+
+
+/* ---------- Admin home: centered logo beside title ---------- */
+.home-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 2px 0 18px;
+}
+.home-hero-logo {
+  display: inline-flex;
+  flex: none;
+  background: #fff;
+  border-radius: 12px;
+  padding: 5px 9px;
+}
+.home-hero-logo img { height: 56px; width: auto; display: block; }
+.home-hero-text { text-align: left; }
+.home-hero-text h2 { font-size: 24px; margin: 0 0 4px; color: var(--ink-100); }
+.home-hero-text p { font-size: 14px; color: var(--ink-500); margin: 0; }
+
+/* Narrow screens: stack again so nothing is squeezed. */
+@media (max-width: 560px) {
+  .home-hero { flex-direction: column; gap: 10px; }
+  .home-hero-text { text-align: center; }
+}
+
+/* ---------- Admin home: dashboard stat cards (count left, text right) ---------- */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.dash-card {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-line);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.dash-num {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 42px;
+  line-height: 1;
+  color: var(--amber);
+  min-width: 56px;
+  text-align: left;
+}
+.dash-text { flex: 1; min-width: 0; text-align: left; }
+.dash-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-300);
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+.dash-sub { font-size: 11.5px; color: var(--ink-500); }
+.dash-sub .ok { color: var(--success); font-weight: 700; }
+.dash-icon {
+  width: 30px; height: 30px; flex: none;
+  align-self: flex-start;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.dash-icon.tone-amber  { background: rgba(232,163,61,0.16);  color: #e8a33d; }
+.dash-icon.tone-blue   { background: rgba(56,160,220,0.18);  color: #4db3e6; }
+.dash-icon.tone-purple { background: rgba(150,110,230,0.18); color: #a98bf0; }
+.dash-icon.tone-green  { background: rgba(76,175,109,0.18);  color: #4caf6d; }
+
+/* ---------- Sidebar: name with Emp ID underneath ---------- */
+.sidebar .brand .brand-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.sidebar .brand .brand-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar .brand .brand-text small { font-size: 11.5px; font-weight: 500; color: var(--ink-500); }
+
+/* ---------- Light / Dark switch (sidebar, above Logout) ---------- */
+.theme-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 10px;
+  background: var(--navy-800);
+  border: 1px solid var(--navy-line);
+  border-radius: 10px;
+}
+.theme-switch button {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.theme-switch button:hover { color: var(--ink-100); }
+.theme-switch button.active { background: var(--amber-soft); color: var(--amber); }
+
+/* ---------- Light theme: same variables, light values ---------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --navy-950: #f2f4f9;   /* page background */
+  --navy-900: #ffffff;   /* sidebar, cards */
+  --navy-800: #eef1f7;   /* inputs, hover rows */
+  --navy-700: #dfe5f0;
+  --navy-line: #d6dce8;  /* borders */
+  --ink-100: #0f1b2e;    /* main text */
+  --ink-300: #3e4b61;
+  --ink-500: #66738a;
+  --amber: #d4881a;
+  --amber-dark: #b3720f;
+  --amber-soft: rgba(212, 136, 26, 0.14);
+  --success: #2f9355;
+  --danger: #d0443a;
+}
+:root[data-theme="light"] .badge-neutral { background: rgba(15, 27, 46, 0.08); }
+:root[data-theme="light"] .status-pill.is-pending { background: rgba(15, 27, 46, 0.05); }
+:root[data-theme="light"] .status-pill.is-scanned { color: #15803d; background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.5); }
+:root[data-theme="light"] .scan-chip.is-located,
+:root[data-theme="light"] .scan-chip.is-located svg { color: #15803d; }
+:root[data-theme="light"] .scan-chip.geo-chip { background: #e6f1ff; border-color: #b9d3f5; color: #0b6ea8; }
+:root[data-theme="light"] .scan-chip.geo-chip svg { color: #0b6ea8; }
+:root[data-theme="light"] .scan-chip.geo-chip:hover { border-color: #0b6ea8; background: #d6e8ff; }
+:root[data-theme="light"] .fp-success-text { color: #2f9355; }
+:root[data-theme="light"] .dash-icon.tone-amber  { color: #c5811f; }
+:root[data-theme="light"] .dash-icon.tone-blue   { color: #1d84bd; }
+:root[data-theme="light"] .dash-icon.tone-purple { color: #7a58d6; }
+:root[data-theme="light"] .dash-icon.tone-green  { color: #2f9355; }
+:root[data-theme="light"] .home-hero-logo { box-shadow: 0 0 0 1px var(--navy-line); }
+:root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; opacity: 0.7; }
+
+/* ---------- Admin: icons in sidebar, collapsible sidebar, topbar theme toggle ---------- */
+.nav-icon { flex-shrink: 0; opacity: 0.9; }
+.nav-label { white-space: nowrap; }
+.nav-link.active .nav-icon { opacity: 1; }
+
+.app-shell { transition: grid-template-columns 0.2s ease; }
+@media (min-width: 901px) {
+  /* Collapsed = slim icon-only rail (labels hidden); expanded = icons + text */
+  .app-shell.sidebar-collapsed { grid-template-columns: 72px minmax(0, 1fr); }
+  .app-shell.sidebar-collapsed .sidebar { padding: 22px 10px; overflow-x: hidden; }
+  .app-shell.sidebar-collapsed .sidebar .brand { justify-content: center; padding: 4px 0 18px; }
+  .app-shell.sidebar-collapsed .sidebar .brand-text,
+  .app-shell.sidebar-collapsed .sidebar .guard-brand-text,
+  .app-shell.sidebar-collapsed .nav-label { display: none; }
+  .app-shell.sidebar-collapsed .nav-group-label {
+    font-size: 0; height: 1px; padding: 0; margin: 12px 8px;
+    background: var(--navy-line);
+  }
+  .app-shell.sidebar-collapsed .nav-link { justify-content: center; padding: 11px 0; }
+}
+
+.topbar { justify-content: space-between; gap: 12px; }
+.topbar-right { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.topbar .who { margin-left: 0; }
+body.has-topbar .topbar .who { display: none; }
+@media (max-width: 900px) { body.has-topbar .topbar .who { display: flex; } }
+
+.theme-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--navy-800);
+  border: 1px solid var(--navy-line);
+  color: var(--ink-100);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--amber); color: var(--amber); }
+@media (max-width: 520px) { .theme-toggle .theme-toggle-text { display: none; } }
+
+/* ---------- Admin: logo + title sit in the topbar, on one line with the buttons ---------- */
+.topbar { position: sticky; height: 68px; }
+.topbar-brand {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 12px;
+  max-width: calc(100% - 300px);
+  pointer-events: none;
+}
+.topbar-brand .home-hero-logo { padding: 3px 7px; border-radius: 10px; }
+.topbar-brand .home-hero-logo img { height: 40px; }
+.topbar-brand .home-hero-text h2 { font-size: 20px; margin: 0; line-height: 1.1; white-space: nowrap; }
+.topbar-brand .home-hero-text p { font-size: 12px; margin-top: 2px; white-space: nowrap; }
+@media (max-width: 900px) {
+  .topbar-brand .home-hero-text p { display: none; }
+  .topbar-brand { max-width: calc(100% - 200px); }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 0 12px; }
+  .topbar-brand { position: static; transform: none; margin: 0 auto 0 6px; max-width: none; }
+  .topbar-brand .home-hero-text h2 { font-size: 16px; }
+  .topbar-brand .home-hero-logo img { height: 32px; }
+  .topbar-right { margin-left: 0; gap: 8px; }
+  body.has-topbar .topbar .who span { display: none; }
+}
+
+/* Security page: page title sits beside the menu button */
+.topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.topbar-left { flex-direction: row; }
+.topbar-left h1 { font-size: 26px; font-weight: 700; line-height: 1; white-space: nowrap; margin: 0; letter-spacing: 0.02em; }
+@media (max-width: 1100px) { .topbar-left h1 { font-size: 22px; } }
+@media (max-width: 640px) { .topbar-left h1 { font-size: 13px; } }
+
+/* =====================================================================
+   Responsive pass (phones, tablets, small laptops)
+   ===================================================================== */
+.main { min-width: 0; }
+img { max-width: 100%; }
+
+/* Phone/tablet sidebar: slides over the page with a tap-to-close backdrop */
+.sidebar-backdrop { display: none; }
+@media (max-width: 900px) {
+  .sidebar.open {
+    max-width: 85vw;
+    z-index: 30;
+    top: 0; left: 0;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.45);
+    overflow-y: auto;
+  }
+  .sidebar.open + .sidebar-backdrop {
+    display: block;
+    position: fixed; inset: 0;
+    z-index: 25;
+    background: rgba(5, 10, 20, 0.55);
+  }
+  .content { padding: 20px; }
+  .table-scroll { -webkit-overflow-scrolling: touch; }
+}
+
+/* Small laptops / tablets */
+@media (max-width: 1100px) {
+  .dash-stats { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+}
+
+/* Phones */
+@media (max-width: 640px) {
+  .content { padding: 14px; }
+  .card { padding: 14px; }
+  .section-head h2 { font-size: 19px; }
+
+  .dash-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dash-card { padding: 12px; gap: 10px; }
+  .dash-num { font-size: 32px; min-width: 0; }
+  .dash-icon { display: none; }
+
+  /* Toolbars: every control gets its own full-width row */
+  .data-toolbar { gap: 10px; }
+  .data-toolbar .search-field { min-width: 0; flex: 1 1 100%; }
+  .data-toolbar .toolbar-right { width: 100%; }
+  .data-toolbar .toolbar-right > * { flex: 1 1 auto; }
+  .data-toolbar .toolbar-right .btn { width: 100%; }
+  .data-toolbar select,
+  .data-toolbar input[type="date"] { min-width: 0; max-width: 100%; }
+
+  .pagination-bar { justify-content: center; }
+  .table-scroll { max-height: 70vh; }
+  th, td { padding: 10px 8px; }
+
+  .modal-overlay { padding: 12px; }
+  .modal-box { padding: 18px; max-height: 92vh; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions .btn { flex: 1 1 auto; }
+
+  .login-panel { padding: 24px 16px; }
+
+  /* Topbar: keep everything on one row */
+  .topbar-brand { min-width: 0; flex: 1 1 auto; }
+  .topbar-brand .home-hero-text { min-width: 0; }
+  .topbar-brand .home-hero-text h2 { overflow: hidden; text-overflow: ellipsis; }
+  .topbar-left h1 { display: none; }
+}
+
+@media (max-width: 380px) {
+  .dash-stats { grid-template-columns: 1fr; }
+  .topbar-brand .home-hero-logo { display: none; }
+}
+
+/* =====================================================================
+   Fixed-height app: the page itself never scrolls. Only the table data
+   scrolls (header stays pinned); pages with no table (forms, profile)
+   scroll inside the content area if they are taller than the screen.
+   ===================================================================== */
+html:has(body.has-topbar),
+body.has-topbar { height: 100%; overflow: hidden; }
+
+body.has-topbar .app-shell {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: minmax(0, 1fr);
+}
+body.has-topbar .sidebar { height: 100%; }
+body.has-topbar .main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+body.has-topbar .topbar { flex: none; position: relative; }
+body.has-topbar .content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+body.has-topbar .content > * { flex: 0 0 auto; }
+
+/* JS (fitTables) tags every wrapper from a table box up to the content area
+   with .fit-chain and the table box itself with .fit-fill, so the table
+   takes all remaining height and scrolls inside it. */
+body.has-topbar .content .fit-chain:not([style*="display:none"]):not([style*="display: none"]) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+}
+body.has-topbar .content .card.fit-chain { margin-bottom: 0; }
+body.has-topbar .content .fit-fill {
+  flex: 1 1 0;
+  min-height: 200px;
+  max-height: none;
+}
+body.has-topbar .content .fit-chain > .pagination-bar,
+body.has-topbar .content .fit-chain > .data-toolbar,
+body.has-topbar .content .fit-chain > .card-title { flex: none; }
+
+/* A form card that shares the page with a table must not be squashed */
+body.has-topbar .content > .card:not(.fit-chain),
+body.has-topbar .content > .two-col,
+body.has-topbar .content > .assign-board { flex-shrink: 0; }
+
+/* ---------- Search boxes: clear (x) button ---------- */
+.clear-wrap { position: relative; display: block; width: 100%; }
+.clear-wrap > input { padding-right: 36px !important; }
+.clear-wrap:has(> .mini-search) { margin-bottom: 10px; }
+.clear-wrap > .mini-search { margin-bottom: 0; }
+.clear-btn {
+  display: none;
+  position: absolute; right: 8px; top: 50%;
+  transform: translateY(-50%);
+  width: 24px; height: 24px;
+  align-items: center; justify-content: center;
+  padding: 0; border: 0; border-radius: 50%;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+.clear-btn:hover { background: var(--navy-700); color: var(--ink-100); }
+.clear-wrap.has-value > .clear-btn { display: inline-flex; }
+input[type="search"]::-webkit-search-cancel-button { display: none; }
+
+/* ---------- Hide scrollbars everywhere (scrolling still works) ---------- */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* ---------- Duty Assignments: numbered cards ---------- */
+.duty-no {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  margin-right: 8px;
+  border-radius: 10px;
+  background: var(--navy-700);
+  color: var(--ink-100);
+  font-size: 11px; font-weight: 700; letter-spacing: 0;
+}
+.duty-mini-card .new-badge { color: var(--amber); }
+.duty-mini-card .new-badge .duty-no { background: var(--amber-soft); color: var(--amber); }
+.duty-mini-card .existing-badge:not(.new-badge) .duty-no { background: rgba(76,175,109,0.18); color: var(--success); }
+
+/* ---------- "OR" between the two Add Security cards ---------- */
+.two-col.with-or { grid-template-columns: 1.1fr auto 0.9fr; align-items: stretch; }
+.or-divider {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px;
+  color: var(--ink-500);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+}
+.or-divider::before, .or-divider::after {
+  content: ""; flex: 1; width: 1px; background: var(--navy-line);
+}
+.or-divider span {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--navy-line);
+  background: var(--navy-900);
+}
+@media (max-width: 860px) {
+  .two-col.with-or { grid-template-columns: 1fr; }
+  .or-divider { flex-direction: row; }
+  .or-divider::before, .or-divider::after { width: auto; height: 1px; }
+}
+
+/* ---------- Contact Us card ---------- */
+.contact-list { display: flex; flex-direction: column; gap: 16px; }
+.contact-card { max-width: 520px; padding: 22px 24px; }
+.contact-title { color: var(--amber); font-size: 19px; font-weight: 700; margin: 0 0 8px; }
+.contact-dept { color: var(--ink-300); font-size: 13px; margin: 0; }
+.contact-divider { height: 1px; background: var(--navy-line); margin: 18px 0; }
+.contact-name { font-weight: 700; font-size: 15px; margin: 0 0 14px; }
+.contact-role { font-size: 14.5px; margin: 0 0 14px; }
+.contact-line { display: flex; align-items: center; gap: 10px; font-size: 14.5px; margin: 0 0 14px; }
+.contact-line:last-child { margin-bottom: 0; }
+.contact-line svg { flex: none; color: var(--amber); }
+.contact-line a:hover { color: var(--amber); text-decoration: underline; }
+.contact-line a, .contact-line span { min-width: 0; overflow-wrap: anywhere; }
+
+/* ---------- Profile table: icon + label ---------- */
+.pf-label { color: var(--ink-500); white-space: nowrap; }
+.pf-label .pf-icon { vertical-align: -3px; margin-right: 10px; color: var(--amber); }
+
+/* ---------- Logout confirmation dialog ---------- */
+.logout-confirm { max-width: 380px; text-align: center; }
+.logout-confirm-icon {
+  width: 52px; height: 52px; margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(226, 87, 76, 0.14);
+  color: #e2574c;
+}
+.logout-confirm h3 { margin: 0 0 8px; }
+.logout-confirm p { color: var(--ink-300); font-size: 14px; line-height: 1.5; margin: 0 0 20px; }
+.logout-confirm-actions { display: flex; gap: 10px; justify-content: center; }
+.logout-confirm-actions .btn { flex: 1 1 0; width: auto; }
+
+/* Inline field validation (Add Security form) */
+.field-error { margin-top: 4px; min-height: 0; font-size: 12px; }
+.field-error:empty { display: none; }
+.input-invalid { border-color: var(--danger) !important; }
+
+/* ---------- Guard Home: Reminder + My Duties fit the screen ----------
+   Compact spacing so a full page of duties fits without the page itself
+   scrolling; the table (header pinned) takes all remaining height and the
+   pagination bar stays visible underneath. */
+.reminder-card { padding: 12px 18px; margin-bottom: 0; }
+.reminder-card .card-title { margin-bottom: 6px; }
+.reminder-card p { margin: 0; line-height: 1.45; }
+.duty-head { margin: 14px 0 2px !important; }
+.duty-head h2 { font-size: 20px; }
+.duty-head p { margin-top: 2px; }
+.duty-table td { padding: 7px 12px; font-size: 13px; }
+.duty-table th { padding: 8px 12px; }
+.duty-table .chip { padding: 2px 8px; margin: 2px 4px 2px 0; font-size: 11px; }
+.duty-table .badge { padding: 2px 9px; font-size: 11px; }
+
+/* My Duties lives inside one card: toolbar, table, then the footer bar */
+.duty-card { padding: 16px 20px; margin-top: 12px; }
+
+/* My Duties heading sits inside the card, on the same row as the controls */
+.duty-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
+}
+.duty-card-title h2 { font-size: 20px; color: var(--ink-100); margin: 0; }
+.duty-card-title p { color: var(--ink-500); font-size: 13px; margin: 2px 0 0; }
+.duty-card-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-left: auto; }
