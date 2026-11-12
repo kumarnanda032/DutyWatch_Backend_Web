@@ -128,6 +128,21 @@ async function removeLegacyDutyPlaceIndexes() {
         console.log(`Removed old duty place index "${idx.name}".`);
       }
     }
+    // The field used to be called `name`. Rename it to `place` on any existing
+    // documents and drop the old unique `name_1` index, then build the new one.
+    const renamed = await DutyPlace.collection.updateMany(
+      { name: { $exists: true }, place: { $exists: false } },
+      { $rename: { name: 'place' } }
+    );
+    if (renamed.modifiedCount) {
+      console.log(`Renamed field "name" -> "place" on ${renamed.modifiedCount} duty place(s).`);
+    }
+    for (const idx of await DutyPlace.collection.indexes()) {
+      if (idx.key && Object.prototype.hasOwnProperty.call(idx.key, 'name')) {
+        await DutyPlace.collection.dropIndex(idx.name);
+        console.log(`Removed old duty place index "${idx.name}".`);
+      }
+    }
     await DutyPlace.createIndexes();
   } catch (err) {
     // Collection doesn't exist yet (fresh database) or no permission - not fatal.

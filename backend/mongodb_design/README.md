@@ -81,16 +81,16 @@ Indexes: `{ empId: 1 }` unique.
 ## 3. `dutyplaces`
 
 A single duty place (no main place / sub place hierarchy). The place's QR code
-encodes its exact `name`.
+encodes its exact `place`.
 
 ```json
 {
   "_id": "ObjectId",
-  "name": "Gate A",
+  "place": "Gate A",
   "createdAt": "2024-01-01T09:00:00Z"
 }
 ```
-Indexes: `{ name: 1 }` unique.
+Indexes: `{ place: 1 }` unique.
 
 ## 4. `dutyassignments`
 

@@ -7,7 +7,7 @@
  * BACK UP THE DATABASE FIRST (mongodump). Uses MONGO_* / MONGO_URI from .env.
  *
  * What it does
- *   dutyplaces       { mainPlace, subPlaces:[{name}] }  ->  one { name } document per sub place.
+ *   dutyplaces       { mainPlace, subPlaces:[{name}] }  ->  one { place } document per sub place.
  *                    The old main-place documents are removed. If two sub places share
  *                    a name (case-insensitive) only one duty place is kept.
  *   dutyassignments  { mainPlace, subPlaces:[..], dutyPlaceId } -> { dutyPlaces:[..] }
@@ -31,19 +31,19 @@ const APPLY = process.argv.includes('--apply');
   // ---- dutyplaces ----
   const places = db.collection('dutyplaces');
   const oldPlaces = await places.find({ mainPlace: { $exists: true } }).toArray();
-  const wanted = new Map(); // lowercase name -> { name, createdAt }
+  const wanted = new Map(); // lowercase name -> { place, createdAt }
   for (const p of oldPlaces) {
     for (const s of p.subPlaces || []) {
       const name = String((s && s.name) || '').trim();
       if (name && !wanted.has(name.toLowerCase())) {
-        wanted.set(name.toLowerCase(), { name, createdAt: p.createdAt || new Date() });
+        wanted.set(name.toLowerCase(), { place: name, createdAt: p.createdAt || new Date() });
       }
     }
   }
   const existingNew = new Set(
-    (await places.find({ name: { $exists: true } }).toArray()).map((p) => String(p.name).toLowerCase())
+    (await places.find({ place: { $exists: true } }).toArray()).map((p) => String(p.place).toLowerCase())
   );
-  const toInsert = [...wanted.values()].filter((w) => !existingNew.has(w.name.toLowerCase()));
+  const toInsert = [...wanted.values()].filter((w) => !existingNew.has(w.place.toLowerCase()));
   console.log(`dutyplaces: ${oldPlaces.length} old main-place docs -> ${toInsert.length} new duty places`);
 
   // ---- dutyassignments ----
@@ -66,12 +66,12 @@ const APPLY = process.argv.includes('--apply');
   catch (e) { console.log('index mainPlace_1 not dropped:', e.codeName || e.message); }
 
   if (toInsert.length) {
-    await places.insertMany(toInsert.map((w) => ({ name: w.name, createdAt: w.createdAt, updatedAt: new Date() })));
+    await places.insertMany(toInsert.map((w) => ({ place: w.place, createdAt: w.createdAt, updatedAt: new Date() })));
   }
   if (oldPlaces.length) {
     await places.deleteMany({ _id: { $in: oldPlaces.map((p) => p._id) } });
   }
-  await places.createIndex({ name: 1 }, { unique: true });
+  await places.createIndex({ place: 1 }, { unique: true });
 
   await assignments.updateMany(
     { subPlaces: { $exists: true } },

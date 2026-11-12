@@ -21,10 +21,10 @@ function sameNameRegex(name) {
 }
 
 // A duplicate-key error only means "name already exists" when the clash is on
-// `name`. Any other index clash is a database problem, not a duplicate name.
+// `place`. Any other index clash is a database problem, not a duplicate name.
 function legacyIndexOr409(err, res, message) {
   const keys = Object.keys(err.keyPattern || {});
-  if (keys.length && !keys.includes('name')) {
+  if (keys.length && !keys.includes('place')) {
     console.error('Duty place save blocked by an unexpected index on:', keys.join(', '));
     return res.status(500).json({ error: 'Could not save the duty place. Restart the server and try again.' });
   }
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
     const filter = {};
     const search = (req.query.search || '').trim();
     if (search) {
-      filter.name = new RegExp(escapeRegex(search), 'i');
+      filter.place = new RegExp(escapeRegex(search), 'i');
     }
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
@@ -84,7 +84,7 @@ router.get('/stats', async (req, res) => {
 // Assign Duty place picker and the Generate QR Code dropdown.
 router.get('/options', async (req, res) => {
   try {
-    const data = await DutyPlace.find({}).sort({ name: 1 }).select('name createdAt');
+    const data = await DutyPlace.find({}).sort({ place: 1 }).select('place createdAt');
     res.json({ data });
   } catch (err) {
     console.error(err);
@@ -92,41 +92,41 @@ router.get('/options', async (req, res) => {
   }
 });
 
-// POST /api/duty-places  { name }  or  { names: [name, ...] }
-// Creates one duty place, or several at once. With `names`, each is handled
+// POST /api/duty-places  { place }  or  { places: [place, ...] }
+// Creates one duty place, or several at once. With `places`, each is handled
 // independently: new ones are saved, blanks / repeats / names that already
-// exist are skipped and reported. Response (names form):
-//   201 { added: [doc, ...], skipped: [{ name, reason }, ...] }   (400 if nothing was added)
+// exist are skipped and reported. Response (places form):
+//   201 { added: [doc, ...], skipped: [{ place, reason }, ...] }   (400 if nothing was added)
 router.post('/', requireRole('admin'), async (req, res) => {
   try {
-    if (Array.isArray(req.body.names)) {
+    if (Array.isArray(req.body.places || req.body.names)) {
       const added = [];
       const skipped = [];
       const seen = new Set();
 
-      for (const raw of req.body.names) {
+      for (const raw of (req.body.places || req.body.names)) {
         const name = cleanName(raw);
         if (!name) continue;
         const key = name.toLowerCase();
         if (seen.has(key)) {
-          skipped.push({ name, reason: 'Listed more than once.' });
+          skipped.push({ place: name, reason: 'Listed more than once.' });
           continue;
         }
         seen.add(key);
 
-        if (await DutyPlace.findOne({ name: sameNameRegex(name) })) {
-          skipped.push({ name, reason: 'Already exists.' });
+        if (await DutyPlace.findOne({ place: sameNameRegex(name) })) {
+          skipped.push({ place: name, reason: 'Already exists.' });
           continue;
         }
         try {
-          added.push(await DutyPlace.create({ name }));
+          added.push(await DutyPlace.create({ place: name }));
         } catch (rowErr) {
           if (rowErr.code === 11000) {
             const keys = Object.keys(rowErr.keyPattern || {});
-            if (keys.length && !keys.includes('name')) throw rowErr; // leftover index - handled below
-            skipped.push({ name, reason: 'Already exists.' });
+            if (keys.length && !keys.includes('place')) throw rowErr; // leftover index - handled below
+            skipped.push({ place: name, reason: 'Already exists.' });
           } else {
-            skipped.push({ name, reason: rowErr.message || 'Could not save.' });
+            skipped.push({ place: name, reason: rowErr.message || 'Could not save.' });
           }
         }
       }
@@ -140,17 +140,17 @@ router.post('/', requireRole('admin'), async (req, res) => {
       return res.status(201).json({ added, skipped });
     }
 
-    const name = cleanName(req.body.name);
+    const name = cleanName((req.body.place !== undefined ? req.body.place : req.body.name));
     if (!name) {
       return res.status(400).json({ error: 'Duty place name is required.' });
     }
 
-    const existing = await DutyPlace.findOne({ name: sameNameRegex(name) });
+    const existing = await DutyPlace.findOne({ place: sameNameRegex(name) });
     if (existing) {
       return res.status(409).json({ error: 'That duty place already exists.' });
     }
 
-    const doc = await DutyPlace.create({ name });
+    const doc = await DutyPlace.create({ place: name });
     res.status(201).json(doc);
   } catch (err) {
     console.error(err);
@@ -161,12 +161,12 @@ router.post('/', requireRole('admin'), async (req, res) => {
   }
 });
 
-// PUT /api/duty-places/:id  { name }
+// PUT /api/duty-places/:id  { place }
 // Renames a duty place. Note: existing assignments and scans keep the name
 // they were saved with, and a printed QR code still carries the old text.
 router.put('/:id', requireRole('admin'), async (req, res) => {
   try {
-    const name = cleanName(req.body.name);
+    const name = cleanName((req.body.place !== undefined ? req.body.place : req.body.name));
     if (!name) {
       return res.status(400).json({ error: 'Duty place name is required.' });
     }
@@ -176,12 +176,12 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
       return res.status(404).json({ error: 'Duty place not found.' });
     }
 
-    const dupe = await DutyPlace.findOne({ _id: { $ne: doc._id }, name: sameNameRegex(name) });
+    const dupe = await DutyPlace.findOne({ _id: { $ne: doc._id }, place: sameNameRegex(name) });
     if (dupe) {
       return res.status(409).json({ error: 'Another duty place already uses that name.' });
     }
 
-    doc.name = name;
+    doc.place = name;
     await doc.save();
     res.json(doc);
   } catch (err) {
@@ -200,7 +200,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
     if (!doc) {
       return res.status(404).json({ error: 'Duty place not found.' });
     }
-    res.json({ deleted: true, name: doc.name });
+    res.json({ deleted: true, place: doc.place });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error deleting duty place.' });

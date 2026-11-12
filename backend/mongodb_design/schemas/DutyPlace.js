@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const DutyPlaceSchema = new Schema(
   {
-    name: { type: String, required: true, unique: true, trim: true },
+    place: { type: String, required: true, unique: true, trim: true },
   },
   { timestamps: true }
 );

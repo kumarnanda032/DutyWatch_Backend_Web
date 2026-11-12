@@ -161,7 +161,7 @@ async function loadMyDuties() {
   if (!user) return;
   const seq = ++dutyLoadSeq;
   try {
-    const res = await fetchQrScanCoverageViaApi({ guardEmpId: user.roll_no }); // every duty, with per-sub-place scanned status
+    const res = await fetchQrScanCoverageViaApi({ guardEmpId: user.roll_no }); // every duty, with per-duty-place scanned status
     if (seq !== dutyLoadSeq) return;
     dutyState.data = res.data || [];
     dutyState.error = null;
@@ -274,11 +274,11 @@ function dutyPageSlice() {
   return { all, total, totalPages, start, pageItems: all.slice(start, start + dutyPageSize) };
 }
 
-// One row per duty: #, Duty Date Range, Status, Main Place, Sub Places.
-// A scanned sub place gets a green tick, an unscanned one a red cross - so a
-// guard can tell at a glance which sub places on a duty they still need to
+// One row per duty: #, Duty Date Range, Status, Duty Places.
+// A scanned duty place gets a green tick, an unscanned one a red cross - so a
+// guard can tell at a glance which places on a duty they still need to
 // visit.
-function subPlaceChip(sp) {
+function dutyPlaceChip(sp) {
   const icon = sp.scanned
     ? '<span style="color:var(--success);">✓</span>'
     : '<span style="color:var(--danger);">✗</span>';
@@ -291,8 +291,7 @@ function dutyRow(d, serial) {
       <td class="serial-col">${serial}</td>
       <td style="white-space:nowrap;">${esc(prettyRange(d.dateRange))}</td>
       <td>${STATUS_BADGE[d.status] || ''}</td>
-      <td class="preserve-space">${esc(d.mainPlace)}</td>
-      <td>${(d.subPlaces || []).map(subPlaceChip).join('')}</td>
+      <td>${(d.dutyPlaces || []).map(dutyPlaceChip).join('')}</td>
     </tr>`;
 }
 
@@ -320,7 +319,7 @@ function dutySection() {
       </div>
       <div class="table-scroll duty-table">
         <table>
-          <thead><tr><th class="serial-col">#</th><th>Duty Date Range</th><th>Status</th><th>Main Place</th><th>Sub Places</th></tr></thead>
+          <thead><tr><th class="serial-col">#</th><th>Duty Date Range</th><th>Status</th><th>Duty Places</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -414,7 +413,7 @@ const renderers = {
   `,
 
   logs: () => `
-    ${sectionHead('Logs/Data', 'Every sub place assigned to you, and whether it was scanned.')}
+    ${sectionHead('Logs/Data', 'Every duty place assigned to you, and whether it was scanned.')}
     <div class="card">
       <div class="data-toolbar">
         <div class="toolbar-right" style="margin-left:0; gap:10px; flex-wrap:wrap;">
@@ -537,14 +536,14 @@ pdfBtn.addEventListener('click', () => {
         const all = combinedDuties();
         const STATUS_LABEL = { today: 'Today', upcoming: 'Upcoming', completed: 'Completed' };
 
-        // One row per duty, Sub Places wrapped inline like a flowing sentence
+        // One row per duty, Duty Places wrapped inline like a flowing sentence
         // (comma-separated, several per line) - same shape as plain wrapped
         // text, just with a tick/cross icon drawn before each name instead of
         // printed [Y]/[N]. jsPDF's built-in font has no tick/cross/arrow
         // glyphs and silently corrupts them if printed as text, so the icons
         // are vector lines, not characters, which is why this needs manual
         // layout instead of a plain autoTable text cell.
-        const ICON_COLUMN = 4;
+        const ICON_COLUMN = 3;
         const LINE_HEIGHT = 4.6; // mm per wrapped line
         const CELL_TOP_PAD = 2.4; // mm, matches autoTable's own cell padding
         const CELL_SIDE_PAD = 2; // mm
@@ -553,12 +552,12 @@ pdfBtn.addEventListener('click', () => {
         const doc = new jspdf.jsPDF({ orientation: 'landscape' });
         doc.setFontSize(8);
 
-        // Greedily wraps this duty's sub places into lines that fit
+        // Greedily wraps this duty's duty places into lines that fit
         // maxWidth, keeping each "name, " as one unbreakable unit (so a line
         // never breaks in the middle of a name) - the same function is used
         // to measure how tall a row needs to be and, later, to actually draw
         // it, so the two always agree.
-        function wrapSubPlaces(subs, maxWidth) {
+        function wrapDutyPlaces(subs, maxWidth) {
           const lines = [[]];
           let x = 0;
           subs.forEach((sp, i) => {
@@ -576,13 +575,12 @@ pdfBtn.addEventListener('click', () => {
 
         const subColWidth = 130;
         const wrapWidth = subColWidth - CELL_SIDE_PAD * 2;
-        const layouts = all.map((d) => wrapSubPlaces(d.subPlaces || [], wrapWidth));
+        const layouts = all.map((d) => wrapDutyPlaces(d.dutyPlaces || [], wrapWidth));
 
         const body = all.map((d, i) => [
           String(i + 1),
           prettyRange(d.dateRange).replace(' \u2192 ', ' to '),
           STATUS_LABEL[d.status] || d.status,
-          d.mainPlace,
           { content: '', styles: { minCellHeight: layouts[i].length * LINE_HEIGHT + CELL_TOP_PAD } },
         ]);
 
@@ -595,7 +593,7 @@ pdfBtn.addEventListener('click', () => {
         doc.autoTable({
           startY: 26,
           theme: 'grid',
-          head: [['#', 'Duty Date Range', 'Status', 'Main Place', 'Sub Places (tick = scanned)']],
+          head: [['#', 'Duty Date Range', 'Status', 'Duty Places (tick = scanned)']],
           body,
           styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
           headStyles: { fillColor: [18, 33, 58] },
@@ -666,7 +664,7 @@ pdfBtn.addEventListener('click', () => {
     const ICON_PIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 4.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg>';
 
     // One chip per scan in a fixed-height slot, so the Scanned At and
-    // Geo-Coordinates cells of a sub place line up with each other row by row.
+    // Geo-Coordinates cells of a duty place line up with each other row by row.
     function scanSlotsHtml(sub, chipFor) {
       if (!sub.scanned || !sub.scans.length) return '<span class="scan-none">—</span>';
       return sub.scans.map(sc => `<div class="scan-slot">${chipFor(sc)}</div>`).join('');
@@ -687,19 +685,18 @@ pdfBtn.addEventListener('click', () => {
       return `<a class="scan-chip geo-chip" href="${url}" target="_blank" rel="noopener noreferrer" title="Open this location on the map">${ICON_PIN}${formatCoord(sc.latitude)}, ${formatCoord(sc.longitude)}</a>`;
     }
 
-    // One serial number per duty (Main Place + Duty Date Range, merged cells),
-    // with EVERY sub place assigned to the guard numbered underneath, each
-    // marked Scanned / Not scanned and every scan time stacked in its Scanned
-    // At cell. Shared by the on-screen table and the PDF.
+    // One serial number per duty (merged with its Duty Date Range), with EVERY
+    // duty place assigned to the guard on its own row, each marked Scanned /
+    // Not scanned and every scan time stacked in its Scanned At cell. Shared by
+    // the on-screen table and the PDF.
     function groupLogRows(duties) {
       const rows = [];
       duties.forEach((g, gi) => {
-        const subs = (g.subPlaces || []).map(sp => {
+        const subs = (g.dutyPlaces || []).map(sp => {
           // scanDetails = every scan with where the phone was (latitude /
           // longitude, null when saved without a GPS fix). An older backend
           // only sends scans (timestamps), so fall back to those with no
-          // location rather than showing nothing. Same shape the admin
-          // dashboard's Recent QR Scans table reads.
+          // location rather than showing nothing.
           const toCoord = v => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
           const scans = Array.isArray(sp.scanDetails)
             ? sp.scanDetails.map(d => ({ at: d.scannedAt, latitude: toCoord(d.latitude), longitude: toCoord(d.longitude) }))
@@ -707,7 +704,7 @@ pdfBtn.addEventListener('click', () => {
           scans.sort((x, y) => (Date.parse(x.at) || 0) - (Date.parse(y.at) || 0));
           return { name: sp.name, scanned: !!sp.scanned, scans };
         });
-        subs.forEach((sub, i) => rows.push({ group: g, groupIndex: gi + 1, span: subs.length, first: i === 0, subIndex: i + 1, sub }));
+        subs.forEach((sub, i) => rows.push({ group: g, groupIndex: gi + 1, span: subs.length, first: i === 0, sub }));
       });
       return rows;
     }
@@ -719,11 +716,9 @@ pdfBtn.addEventListener('click', () => {
         const zebra = r.groupIndex % 2 === 0 ? ' style="background:rgba(255,255,255,0.025);"' : '';
         const merged = r.first
           ? `<td class="serial-col grp-first" rowspan="${r.span}" style="vertical-align:top;">${r.groupIndex}</td>
-             <td class="preserve-space" rowspan="${r.span}" style="vertical-align:top;">${esc(r.group.mainPlace)}</td>
              <td rowspan="${r.span}" style="vertical-align:top; white-space:nowrap;">${esc(prettyRange(r.group.dateRange))}</td>`
           : '';
         return `<tr${zebra}>${merged}
-          <td class="serial-col">${r.subIndex}</td>
           <td class="preserve-space">${esc(r.sub.name)}</td>
           <td class="status-col"><span class="status-pill ${r.sub.scanned ? 'is-scanned' : 'is-pending'}">${r.sub.scanned ? ICON_CHECK : ICON_PENDING}${r.sub.scanned ? 'Scanned' : 'Not scanned'}</span></td>
           <td>${scanSlotsHtml(r.sub, timelineChipHtml)}</td>
@@ -732,14 +727,14 @@ pdfBtn.addEventListener('click', () => {
       }).join('');
 
       return `
-        <table class="recent-scans-table" style="min-width:1290px;">
+        <table class="recent-scans-table" style="min-width:1000px;">
           <colgroup>
-            <col style="width:56px;"><col style="width:190px;"><col style="width:190px;">
-            <col style="width:64px;"><col style="width:220px;"><col style="width:150px;"><col style="width:220px;"><col style="width:200px;">
+            <col style="width:5%;"><col style="width:17%;"><col style="width:24%;">
+            <col style="width:14%;"><col style="width:20%;"><col style="width:20%;">
           </colgroup>
           <thead><tr>
-            <th class="serial-col">#</th><th>Main Place</th><th>Duty Date Range</th>
-            <th class="serial-col">Sub #</th><th>Sub Place</th><th class="status-col">Status</th><th>Scanned At (Timeline)</th><th>Geo-Coordinates</th>
+            <th class="serial-col">#</th><th>Duty Date Range</th><th>Duty Place</th>
+            <th class="status-col">Status</th><th>Scanned At (Timeline)</th><th>Geo-Coordinates</th>
           </tr></thead>
           <tbody>${body}</tbody>
         </table>`;
@@ -768,16 +763,16 @@ pdfBtn.addEventListener('click', () => {
       pdfBtn.disabled = true;
       loaded = { duties: [], byDate, date };
       try {
-        // Every sub place assigned to this guard, tagged scanned / not scanned.
+        // Every duty place assigned to this guard, tagged scanned / not scanned.
         const { data } = await fetchQrScanCoverageViaApi({ guardEmpId: user.roll_no, date });
         if (seq !== logsSeq) return;
 
         loaded = { duties: data, byDate, date };
         pdfBtn.disabled = data.length === 0;
 
-        const allSubs = data.flatMap(d => d.subPlaces || []);
+        const allSubs = data.flatMap(d => d.dutyPlaces || []);
         const scannedCount = allSubs.filter(sp => sp.scanned).length;
-        summary.textContent = `${scannedCount} of ${allSubs.length} sub place${allSubs.length === 1 ? '' : 's'} scanned • ${byDate ? 'Duty ' + prettyDateStr(date) : 'All dates'}`;
+        summary.textContent = `${scannedCount} of ${allSubs.length} duty place${allSubs.length === 1 ? '' : 's'} scanned • ${byDate ? 'Duty ' + prettyDateStr(date) : 'All dates'}`;
 
         if (data.length === 0) {
           wrap.innerHTML = `<p style="color:var(--ink-300); font-size:13.5px; padding:8px 0;">${
@@ -825,11 +820,9 @@ pdfBtn.addEventListener('click', () => {
         const row = [];
         if (r.first) {
           row.push({ content: String(r.groupIndex), rowSpan: r.span, styles: { valign: 'top' } });
-          row.push({ content: r.group.mainPlace, rowSpan: r.span, styles: { valign: 'top' } });
           // Plain "to" - the PDF's built-in font has no arrow glyph.
           row.push({ content: String(r.group.dateRange || '').replace('_', ' to '), rowSpan: r.span, styles: { valign: 'top' } });
         }
-        row.push(String(r.subIndex));
         row.push(r.sub.name);
         row.push(r.sub.scanned ? 'Scanned' : 'Not scanned');
         const pdfLines = pick => (r.sub.scanned && r.sub.scans.length ? r.sub.scans.map(pick).join('\n') : '-');
@@ -843,17 +836,17 @@ pdfBtn.addEventListener('click', () => {
       doc.setFontSize(14);
       doc.text(`Logs/Data - ${user.first_name} (${user.roll_no})`, 14, 15);
       doc.setFontSize(10);
-      const pdfSubs = loaded.duties.flatMap(d => d.subPlaces || []);
-      doc.text(`${scope}  |  ${pdfSubs.filter(sp => sp.scanned).length} of ${pdfSubs.length} sub places scanned`, 14, 21);
+      const pdfSubs = loaded.duties.flatMap(d => d.dutyPlaces || []);
+      doc.text(`${scope}  |  ${pdfSubs.filter(sp => sp.scanned).length} of ${pdfSubs.length} duty places scanned`, 14, 21);
       doc.autoTable({
         startY: 26,
         theme: 'grid',
-        head: [['#', 'Main Place', 'Duty Date Range', 'Sub #', 'Sub Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
+        head: [['#', 'Duty Date Range', 'Duty Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
         body,
         styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
         headStyles: { fillColor: [18, 33, 58] },
         // keep the time and coordinates on one line each (no wrapping mid-value)
-        columnStyles: { 6: { cellWidth: 'wrap' }, 7: { cellWidth: 'wrap' } },
+        columnStyles: { 4: { cellWidth: 'wrap' }, 5: { cellWidth: 'wrap' } },
       });
       doc.save(`logs_${user.roll_no}_${loaded.byDate ? loaded.date : 'all'}.pdf`);
     });

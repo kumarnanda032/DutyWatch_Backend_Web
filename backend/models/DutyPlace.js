@@ -6,7 +6,7 @@ const { Schema } = mongoose;
  * code at (e.g. "North Gate", "Reception Lobby"). There are no main places or
  * sub-places - every duty place stands on its own and has its own QR code.
  *
- * The name is stored exactly as entered (only leading/trailing whitespace is
+ * The place text is stored exactly as entered (only leading/trailing whitespace is
  * trimmed - internal spaces and casing are left untouched), because the QR
  * code for the place encodes this exact text.
  *
@@ -15,7 +15,7 @@ const { Schema } = mongoose;
  */
 const DutyPlaceSchema = new Schema(
   {
-    name: { type: String, required: true, unique: true, trim: true },
+    place: { type: String, required: true, unique: true, trim: true },
   },
   { timestamps: true }
 );

@@ -202,15 +202,7 @@ const renderers = {
       <div class="dash-card">
         <div class="dash-num" id="dutyPlacesCountStat">…</div>
         <div class="dash-text">
-          <span class="dash-label">Main Locations</span>
-          <div class="dash-sub">Campus sectors monitored</div>
-        </div>
-        <span class="dash-icon tone-blue"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" id="activeSubPlacesStat">…</div>
-        <div class="dash-text">
-          <span class="dash-label">Sub Places</span>
+          <span class="dash-label">Duty Places</span>
           <div class="dash-sub">Designated checkpoints</div>
         </div>
         <span class="dash-icon tone-purple"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span>
@@ -239,7 +231,7 @@ const renderers = {
       </div>
       <div class="data-toolbar">
         <div class="search-field">
-          <input type="text" id="recentScansSearch" placeholder="Search by name, emp id, main place or sub place..." />
+          <input type="text" id="recentScansSearch" placeholder="Search by name, emp id or duty place..." />
         </div>
         <div class="toolbar-right">
           <div class="page-size-field">
@@ -262,18 +254,16 @@ const renderers = {
       <div class="table-scroll">
         <table class="recent-scans-table">
           <colgroup>
-            <col style="width:56px;">
-            <col style="width:190px;">
-            <col style="width:170px;">
-            <col style="width:64px;">
-            <col style="width:260px;">
-            <col style="width:140px;">
-            <col style="width:215px;">
-            <col style="width:215px;">
+            <col style="width:5%;">
+            <col style="width:20%;">
+            <col style="width:24%;">
+            <col style="width:14%;">
+            <col style="width:19%;">
+            <col style="width:18%;">
           </colgroup>
-          <thead><tr><th class="serial-col">#</th><th>Guard</th><th>Main Place</th><th class="serial-col">Sub #</th><th>Sub Place</th><th class="status-col">Status</th><th>Scanned At (Timeline)</th><th>Geo-Coordinates</th></tr></thead>
+          <thead><tr><th class="serial-col">#</th><th>Guard</th><th>Duty Place</th><th class="status-col">Status</th><th>Scanned At (Timeline)</th><th>Geo-Coordinates</th></tr></thead>
           <tbody id="recentScansBody">
-            <tr><td colspan="8" style="color:var(--ink-500); font-size:13px;"><span class="spinner" role="status" aria-label="Loading"></span><span class="loader-text">Loading...</span></td></tr>
+            <tr><td colspan="6" style="color:var(--ink-500); font-size:13px;"><span class="spinner" role="status" aria-label="Loading"></span><span class="loader-text">Loading...</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -512,20 +502,20 @@ const renderers = {
 
       <div class="assign-board">
         <div class="card assign-col">
-          <div class="card-title">Main Places</div>
-          <input type="text" id="assignPlacesSearch" class="mini-search" placeholder="Search main places..." />
-          <div class="assign-hint">Drag a place into the Duty Assignments column</div>
-          <div id="assignPlacesList" class="assign-list"><p style="color:var(--ink-500); font-size:13px;">Loading...</p></div>
-        </div>
-        <div class="card assign-col">
           <div class="card-title">Guards</div>
           <input type="text" id="assignGuardsSearch" class="mini-search" placeholder="Search guards..." />
-          <div class="assign-hint">Drag a guard onto a duty card to assign it</div>
+          <div class="assign-hint">Drag a guard into the Duty Assignments column</div>
           <div id="assignGuardsList" class="assign-list"><p style="color:var(--ink-500); font-size:13px;">Loading...</p></div>
         </div>
         <div class="card assign-col">
+          <div class="card-title">Duty Places</div>
+          <input type="text" id="assignPlacesSearch" class="mini-search" placeholder="Search duty places..." />
+          <div class="assign-hint">Drag a place onto a guard's card in the Duty Assignments column</div>
+          <div id="assignPlacesList" class="assign-list"><p style="color:var(--ink-500); font-size:13px;">Loading...</p></div>
+        </div>
+        <div class="card assign-col">
           <div class="card-title">Duty Assignments</div>
-          <div class="assign-hint">Drop a main place here, then drop a guard onto its card. Pick a duty date above to see what's already assigned for that day.</div>
+          <div class="assign-hint">Drop a guard here, then drop one or more duty places onto the guard's card. Pick a duty date above to see what's already assigned for that day.</div>
           <div id="assignDropZone" class="assign-list assign-dropzone"></div>
         </div>
       </div>
@@ -540,7 +530,7 @@ const renderers = {
       <div class="card">
         <div class="data-toolbar">
           <div class="search-field">
-            <input type="text" id="assignedSearchInput" placeholder="Search by guard or main place..." />
+            <input type="text" id="assignedSearchInput" placeholder="Search by guard or duty place..." />
           </div>
           <div class="toolbar-right">
             <input type="date" id="assignedDateFilter" title="Filter by duty date" value="${todayISODate()}" />
@@ -674,14 +664,8 @@ function attachHandlers(section) {
       .catch(() => { document.getElementById('guardsCountStat').textContent = '—'; });
 
     fetchDutyPlaceStatsViaApi()
-      .then(res => {
-        document.getElementById('dutyPlacesCountStat').textContent = res.totalMainPlaces;
-        document.getElementById('activeSubPlacesStat').textContent = res.totalSubPlaces;
-      })
-      .catch(() => {
-        document.getElementById('dutyPlacesCountStat').textContent = '—';
-        document.getElementById('activeSubPlacesStat').textContent = '—';
-      });
+      .then(res => { document.getElementById('dutyPlacesCountStat').textContent = res.totalDutyPlaces; })
+      .catch(() => { document.getElementById('dutyPlacesCountStat').textContent = '—'; });
 
     fetchQrScansViaApi({ date: todayISODate(), limit: 1 })
       .then(res => {
@@ -756,13 +740,12 @@ function attachHandlers(section) {
     function flattenRecentScansCoverage(guards) {
       const rows = [];
       guards.forEach(g => {
-        g.subPlaces.forEach(sp => {
+        (g.dutyPlaces || []).forEach(sp => {
           const scanList = normalizeScanList(sp);
           rows.push({
             guardName: g.guardName,
             guardEmpId: g.guardEmpId,
-            mainPlace: g.mainPlace,
-            subPlace: sp.name,
+            dutyPlace: sp.name,
             scanned: sp.scanned,
             scans: scanList.map(sc => sc.at),
             scanList,
@@ -776,7 +759,7 @@ function attachHandlers(section) {
       if (recentScansState.status === 'scanned' && !row.scanned) return false;
       if (recentScansState.status === 'not-scanned' && row.scanned) return false;
       if (recentScansState.search) {
-        const haystack = `${row.guardName} ${row.guardEmpId} ${row.mainPlace} ${row.subPlace}`.toLowerCase();
+        const haystack = `${row.guardName} ${row.guardEmpId} ${row.dutyPlace}`.toLowerCase();
         if (!haystack.includes(recentScansState.search.toLowerCase())) return false;
       }
       return true;
@@ -791,18 +774,11 @@ function attachHandlers(section) {
     //    rowspan cells to print
     function computeGroupedRecentScans(rows) {
       let groupIndex = 0;
-      let subIndex = 0;
       return rows.map((r, i) => {
         const prev = rows[i - 1];
         const sameGuardAsPrev = prev && prev.guardEmpId === r.guardEmpId;
-        const sameGroupAsPrev = sameGuardAsPrev && prev.mainPlace === r.mainPlace;
-        if (sameGroupAsPrev) {
-          subIndex++;
-        } else {
-          groupIndex++;
-          subIndex = 1;
-        }
-        return { ...r, groupIndex, subIndex, isNewGuard: !sameGuardAsPrev, isNewGroup: !sameGroupAsPrev };
+        if (!sameGuardAsPrev) groupIndex++;
+        return { ...r, groupIndex, isNewGuard: !sameGuardAsPrev, isNewGroup: !sameGuardAsPrev };
       });
     }
 
@@ -823,7 +799,7 @@ function attachHandlers(section) {
       const filtered = recentScansState.rows.filter(matchesRecentScansFilters);
       if (!filtered.length) {
         const msg = recentScansState.rows.length ? 'No scans match your search/filter.' : 'No duty assigned for this date.';
-        body.innerHTML = `<tr><td colspan="8" style="color:var(--ink-500); font-size:13px;">${msg}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" style="color:var(--ink-500); font-size:13px;">${msg}</td></tr>`;
         updateRecentScansPager(0, 1);
         return;
       }
@@ -874,12 +850,8 @@ function attachHandlers(section) {
         if (r.isNewGuard) {
           html.push(`<td rowspan="${guardSpan}" style="vertical-align:top;">${escapeHtml(r.guardName)} ( ${escapeHtml(r.guardEmpId)} )</td>`);
         }
-        if (r.isNewGroup) {
-          html.push(`<td class="preserve-space" rowspan="${groupSpan}" style="vertical-align:top;">${escapeHtml(r.mainPlace)}</td>`);
-        }
 
-        html.push(`<td class="serial-col">${r.subIndex}</td>`);
-        html.push(`<td class="preserve-space">${escapeHtml(r.subPlace)}</td>`);
+        html.push(`<td class="preserve-space">${escapeHtml(r.dutyPlace)}</td>`);
         html.push(`<td class="status-col"><span class="status-pill ${r.scanned ? 'is-scanned' : 'is-pending'}">${r.scanned ? ICON_CHECK : ICON_PENDING}${r.scanned ? 'Scanned' : 'Not scanned'}</span></td>`);
         html.push(`<td>${scanSlotsHtml(r, timelineChipHtml)}</td>`);
         html.push(`<td>${scanSlotsHtml(r, geoChipHtml)}</td>`);
@@ -906,7 +878,7 @@ function attachHandlers(section) {
     function loadRecentScans(date) {
       updateRecentScansHeading(date);
       document.getElementById('recentScansBody').innerHTML =
-        '<tr><td colspan="8" style="color:var(--ink-500); font-size:13px;"><span class="spinner" role="status" aria-label="Loading"></span><span class="loader-text">Loading...</span></td></tr>';
+        '<tr><td colspan="6" style="color:var(--ink-500); font-size:13px;"><span class="spinner" role="status" aria-label="Loading"></span><span class="loader-text">Loading...</span></td></tr>';
       updateRecentScansPager(0, 1);
 
       fetchQrScanCoverageViaApi({ date })
@@ -916,7 +888,7 @@ function attachHandlers(section) {
         })
         .catch(err => {
           document.getElementById('recentScansBody').innerHTML =
-            `<tr><td colspan="8" style="color:var(--danger); font-size:13px;">Could not load data: ${escapeHtml(err.message)}</td></tr>`;
+            `<tr><td colspan="6" style="color:var(--danger); font-size:13px;">Could not load data: ${escapeHtml(err.message)}</td></tr>`;
           updateRecentScansPager(0, 1);
         });
     }
@@ -979,8 +951,8 @@ function attachHandlers(section) {
       }
 
       // Mirrors the on-screen table exactly: one grid line per cell, and the
-      // #/Guard/Main Place columns merged (via autoTable's rowSpan) across
-      // every sub place in that guard+main-place group.
+      // #/Guard columns merged (via autoTable's rowSpan) across
+      // every duty place of that guard.
       const grouped = computeGroupedRecentScans(filtered);
       const body = [];
       for (let i = 0; i < grouped.length; i++) {
@@ -991,20 +963,10 @@ function attachHandlers(section) {
           let span = 0;
           while (grouped[i + span] && grouped[i + span].groupIndex === r.groupIndex) span++;
           row.push({ content: String(r.groupIndex), rowSpan: span, styles: { valign: 'top' } });
-        }
-        if (r.isNewGuard) {
-          let span = 0;
-          while (grouped[i + span] && grouped[i + span].guardEmpId === r.guardEmpId) span++;
           row.push({ content: `${r.guardName} (${r.guardEmpId})`, rowSpan: span, styles: { valign: 'top' } });
         }
-        if (r.isNewGroup) {
-          let span = 0;
-          while (grouped[i + span] && grouped[i + span].groupIndex === r.groupIndex) span++;
-          row.push({ content: r.mainPlace, rowSpan: span, styles: { valign: 'top' } });
-        }
 
-        row.push(String(r.subIndex));
-        row.push(r.subPlace);
+        row.push(r.dutyPlace);
         row.push(r.scanned ? 'Scanned' : 'Not scanned');
         const pdfLines = pick => (r.scanned && r.scanList.length ? r.scanList.map(pick).join('\n') : '—');
         row.push(pdfLines(sc => formatDateTime(sc.at)));
@@ -1018,12 +980,12 @@ function attachHandlers(section) {
       doc.autoTable({
         startY: 22,
         theme: 'grid',
-        head: [['#', 'Guard', 'Main Place', 'Sub #', 'Sub Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
+        head: [['#', 'Guard', 'Duty Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
         body,
         styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
         headStyles: { fillColor: [18, 33, 58] },
         // keep the time and coordinates on one line each (no wrapping mid-value)
-        columnStyles: { 6: { cellWidth: 'wrap' }, 7: { cellWidth: 'wrap' } },
+        columnStyles: { 4: { cellWidth: 'wrap' }, 5: { cellWidth: 'wrap' } },
       });
       doc.save(`qr_scans_${recentScansState.date}.pdf`);
     });
@@ -2095,9 +2057,9 @@ function attachHandlers(section) {
 
       saveBtn.disabled = true;
       try {
-        await addDutyPlaceViaApi({ name });
+        await addDutyPlaceViaApi({ place: name });
         nameInput.value = '';
-        alert('Duty place added.');
+        alert(`Duty place "${name}" added.`);
       } catch (err) {
         errBox.textContent = err.message;
       } finally {
@@ -2128,7 +2090,7 @@ function attachHandlers(section) {
                 ${res.data.map((p, i) => `
                   <tr data-id="${p._id}">
                     <td class="serial-col">${startSerial + i + 1}</td>
-                    <td><b class="preserve-space">${escapeHtml(p.name)}</b></td>
+                    <td><b class="preserve-space">${escapeHtml(p.place)}</b></td>
                     <td style="white-space:nowrap; color:var(--ink-300); font-size:12.5px;">${formatDateTime(p.createdAt)}</td>
                     <td>
                       <div class="row-actions">
@@ -2165,7 +2127,7 @@ function attachHandlers(section) {
       document.querySelectorAll('.delete-place-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const p = currentPlaces.find(r => r._id === btn.dataset.id);
-          if (!confirm(`Delete "${p ? p.name : 'this duty place'}"? This cannot be undone.`)) return;
+          if (!confirm(`Delete "${p ? p.place : 'this duty place'}"? This cannot be undone.`)) return;
           try {
             await deleteDutyPlaceViaApi(btn.dataset.id);
             loadExistingPlaces();
@@ -2181,7 +2143,7 @@ function attachHandlers(section) {
       if (!p) return;
       openModal(`
         <h3>Edit duty place</h3>
-        <div class="field"><label>Duty place</label><input id="editPlaceNameInput" value="${escapeHtml(p.name)}" /></div>
+        <div class="field"><label>Duty place</label><input id="editPlaceNameInput" value="${escapeHtml(p.place)}" /></div>
         <div class="error-text" id="editPlaceError"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline" id="editCancelBtn">Cancel</button>
@@ -2196,7 +2158,7 @@ function attachHandlers(section) {
         const btn = document.getElementById('editSaveBtn');
         btn.disabled = true;
         try {
-          await updateDutyPlaceViaApi(id, { name });
+          await updateDutyPlaceViaApi(id, { place: name });
           closeModal();
           loadExistingPlaces();
         } catch (err) {
@@ -2230,7 +2192,7 @@ function attachHandlers(section) {
       btn.textContent = 'Preparing...';
       try {
         const res = await fetchDutyPlacesViaApi({ search: state.search, page: 1, limit: 10000 });
-        const rows = res.data.map(p => ({ 'Duty Place': p.name, 'Added On': formatDateTime(p.createdAt) }));
+        const rows = res.data.map(p => ({ 'Duty Place': p.place, 'Added On': formatDateTime(p.createdAt) }));
         exportRowsToExcel(rows, { filename: `duty_places_${Date.now()}.xlsx`, sheetName: 'Duty Places' });
       } catch (err) {
         alert('Could not export: ' + err.message);
@@ -2260,7 +2222,7 @@ function attachHandlers(section) {
         const res = await fetchDutyPlaceOptionsViaApi();
         qrPlaceOptions = res.data;
         select.innerHTML = '<option value="">Select a duty place</option>' +
-          qrPlaceOptions.map(p => `<option value="${p._id}">${escapeHtml(p.name)}</option>`).join('');
+          qrPlaceOptions.map(p => `<option value="${p._id}">${escapeHtml(p.place)}</option>`).join('');
         if (previous && qrPlaceOptions.some(p => p._id === previous)) {
           select.value = previous;
         } else {
@@ -2288,15 +2250,15 @@ function attachHandlers(section) {
         const logoImg = await loadImageAsync('images/logo.png');
         // The QR holds the raw duty place name exactly as stored (spaces
         // included) - the guard's scan is matched against that exact text.
-        const canvas = generateQrCanvas(place.name, logoImg);
+        const canvas = generateQrCanvas(place.place, logoImg);
         const dataUrl = canvas.toDataURL('image/png');
 
         currentQrDataUrl = dataUrl;
-        currentQrCaption = { place: place.name };
+        currentQrCaption = { place: place.place };
 
         previewWrap.innerHTML = `
           <div class="qr-frame"><img src="${dataUrl}" alt="QR code" style="display:block; width:220px; height:220px;" /></div>
-          <div class="preserve-space" style="font-size:16px; font-weight:700;">${escapeHtml(place.name)}</div>
+          <div class="preserve-space" style="font-size:16px; font-weight:700;">${escapeHtml(place.place)}</div>
         `;
         document.getElementById('downloadQrPdfBtn').disabled = false;
       } catch (err) {
@@ -2427,46 +2389,48 @@ function attachHandlers(section) {
     let placesData = [];
     let guardsData = [];
     let existingDutiesForDate = []; // already saved in the DB for the picked date
-    let pendingDuties = []; // { clientId, dutyPlaceId, mainPlace, subPlaces, guardId, guardEmpId, guardName } - new, not yet submitted
+    // New, not yet submitted. One card per guard; a guard can hold many duty places.
+    // { clientId, guardId, guardEmpId, guardName, dutyPlaces: [placeText, ...] }
+    let pendingDuties = [];
     let clientIdCounter = 0;
     let placesFilter = '';
     let guardsFilter = '';
 
-    // Requirement 1: never allow picking a duty date before today.
+    // Never allow picking a duty date before today.
     document.getElementById('assignDutyDate').min = todayISODate();
 
     // Combines what's already saved for this date with what's being built
     // right now, so a guard/place can't be dragged in twice for the same day.
     function usedGuardEmpIds() {
       return new Set([
-        ...pendingDuties.filter(d => d.guardEmpId).map(d => d.guardEmpId),
+        ...pendingDuties.map(d => d.guardEmpId),
         ...existingDutiesForDate.map(d => d.guardEmpId),
       ]);
     }
-    function usedMainPlaceKeys() {
-      return new Set([
-        ...pendingDuties.map(d => d.mainPlace.toLowerCase()),
-        ...existingDutiesForDate.map(d => d.mainPlace.toLowerCase()),
-      ]);
+    function usedPlaceKeys() {
+      const keys = new Set();
+      pendingDuties.forEach(d => d.dutyPlaces.forEach(p => keys.add(String(p).toLowerCase())));
+      existingDutiesForDate.forEach(d => (d.dutyPlaces || []).forEach(p => keys.add(String(p).toLowerCase())));
+      return keys;
     }
 
     function renderPlacesList() {
       const box = document.getElementById('assignPlacesList');
-      const used = usedMainPlaceKeys();
-      const filtered = placesData.filter(p => p.mainPlace.toLowerCase().includes(placesFilter.toLowerCase()));
       if (!placesData.length) {
-        box.innerHTML = '<p style="color:var(--ink-500); font-size:13px;">No duty places yet - add one from Add Duty Places.</p>';
+        box.innerHTML = '<p style="color:var(--ink-500); font-size:13px;">No duty places yet - add one from Duty Places.</p>';
         return;
       }
+      const used = usedPlaceKeys();
+      const filtered = placesData.filter(p => p.place.toLowerCase().includes(placesFilter.toLowerCase()));
       if (!filtered.length) {
-        box.innerHTML = '<p style="color:var(--ink-500); font-size:13px;">No main places match that search.</p>';
+        box.innerHTML = '<p style="color:var(--ink-500); font-size:13px;">No duty places match that search.</p>';
         return;
       }
       box.innerHTML = filtered.map((p, i) => {
-        const isUsed = used.has(p.mainPlace.toLowerCase());
+        const isUsed = used.has(p.place.toLowerCase());
         return `
           <div class="assign-item${isUsed ? ' used' : ''}" draggable="${isUsed ? 'false' : 'true'}" data-place-id="${p._id}">
-            <span class="idx">${i + 1}.</span> <span class="preserve-space">${escapeHtml(p.mainPlace)}</span>
+            <span class="idx">${i + 1}.</span> <span class="preserve-space">${escapeHtml(p.place)}</span>
             ${isUsed ? '<span style="margin-left:auto; font-size:10.5px; color:var(--ink-500);">assigned</span>' : ''}
           </div>`;
       }).join('');
@@ -2497,30 +2461,29 @@ function attachHandlers(section) {
       }).join('');
     }
 
-    // Requirement 4 + 5: existing (locked) duties for the picked date are
-    // shown first, then new pending ones, then a placeholder that's always
-    // visible so it's clear there's room to drag in another duty.
+    // Existing (locked) duties for the picked date are shown first, then new
+    // pending ones, then a placeholder that's always visible so it's clear
+    // there's room to drag in another guard.
     function renderDropZone() {
       const box = document.getElementById('assignDropZone');
       const existingHtml = existingDutiesForDate.map((d, i) => `
         <div class="duty-mini-card existing-duty">
           <div class="existing-badge"><span class="duty-no">${i + 1}</span>Already assigned</div>
-          <div class="mini-place preserve-space">${escapeHtml(d.mainPlace)}</div>
-          <div>${(d.subPlaces || []).map(s => `<span class="chip">${escapeHtml(s)}</span>`).join('')}</div>
-          <div class="mini-guard-slot filled">${escapeHtml(d.guardName)} (${escapeHtml(d.guardEmpId)})</div>
+          <div class="mini-place preserve-space">${escapeHtml(d.guardName)} (${escapeHtml(d.guardEmpId)})</div>
+          <div>${(d.dutyPlaces || []).map(p => `<span class="chip preserve-space">${escapeHtml(p)}</span>`).join('')}</div>
         </div>`).join('');
 
       const pendingHtml = pendingDuties.map((d, i) => `
         <div class="duty-mini-card" data-client-id="${d.clientId}">
           <button type="button" class="remove-btn" data-client-id="${d.clientId}" title="Remove this duty">✕</button>
           <div class="existing-badge new-badge"><span class="duty-no">${existingDutiesForDate.length + i + 1}</span>New</div>
-          <div class="mini-place preserve-space">${escapeHtml(d.mainPlace)}</div>
-          <div>${d.subPlaces.length ? d.subPlaces.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join('') : '<span style="color:var(--ink-500); font-size:11.5px;">No sub places</span>'}</div>
-          <div class="mini-guard-slot${d.guardName ? ' filled' : ''}" data-client-id="${d.clientId}">${d.guardName ? escapeHtml(d.guardName) : 'Drop a guard here'}</div>
+          <div class="mini-place preserve-space">${escapeHtml(d.guardName)} (${escapeHtml(d.guardEmpId)})</div>
+          <div>${d.dutyPlaces.map((p, pi) => `<span class="chip preserve-space">${escapeHtml(p)} <button type="button" class="chip-remove" data-client-id="${d.clientId}" data-index="${pi}" title="Remove this place" style="background:none; border:0; cursor:pointer; padding:0 0 0 4px; color:inherit;">✕</button></span>`).join('')}</div>
+          <div class="mini-guard-slot${d.dutyPlaces.length ? ' filled' : ''}" data-client-id="${d.clientId}">${d.dutyPlaces.length ? '+ Drop another duty place here' : 'Drop duty places here'}</div>
         </div>`).join('');
 
       const hasAny = existingDutiesForDate.length + pendingDuties.length > 0;
-      const hintHtml = `<div class="assign-dropzone-hint">${hasAny ? '+ Drag a main place here to add another duty' : 'Drag a main place here to start'}</div>`;
+      const hintHtml = `<div class="assign-dropzone-hint">${hasAny ? '+ Drag a guard here to add another duty' : 'Drag a guard here to start'}</div>`;
 
       box.innerHTML = existingHtml + pendingHtml + hintHtml;
       // the batch changed - any earlier preview is now stale
@@ -2549,9 +2512,9 @@ function attachHandlers(section) {
       if (!placesData.length && !guardsData.length) await loadAssignBoard();
     }
 
-    // Requirement 4: when a duty date is picked, look up what's already
-    // scheduled for that day so it shows up locked in the Duty Assignments
-    // column, and so its places/guards can't be dragged in again.
+    // When a duty date is picked, look up what's already scheduled for that
+    // day so it shows up locked in the Duty Assignments column, and so its
+    // places/guards can't be dragged in again.
     async function loadExistingDutiesForDate(dateStr) {
       if (!dateStr) {
         existingDutiesForDate = [];
@@ -2587,34 +2550,41 @@ function attachHandlers(section) {
       guardsSearchTimer = setTimeout(() => { guardsFilter = e.target.value.trim(); renderGuardsList(); }, 150);
     });
 
-    function assignGuardToClientId(guardId, clientId) {
+    // A guard dropped into the column becomes a new duty card.
+    function addGuardCard(guardId) {
       const guard = guardsData.find(g => g._id === guardId);
-      const target = pendingDuties.find(d => d.clientId === clientId);
-      if (!guard || !target) return;
-      const alreadyOn = pendingDuties.find(d => d.guardId === guardId);
-      if (alreadyOn && alreadyOn.clientId !== clientId) {
-        alert(`${guard.first_name} already has a duty in this batch. A duty is unique per guard - remove that card first, or drop a different guard.`);
+      if (!guard) return;
+      if (pendingDuties.some(d => d.guardEmpId === guard.roll_no)) {
+        alert(`${guard.first_name} already has a duty in this batch. Add more places to that card instead.`);
         return;
       }
-      const alreadyExisting = existingDutiesForDate.find(d => d.guardEmpId === guard.roll_no);
-      if (alreadyExisting) {
+      if (existingDutiesForDate.some(d => d.guardEmpId === guard.roll_no)) {
         alert(`${guard.first_name} already has a duty assigned for this date.`);
         return;
       }
-      target.guardId = guard._id;
-      target.guardEmpId = guard.roll_no;
-      target.guardName = guard.first_name;
+      pendingDuties.push({
+        clientId: 'd' + (++clientIdCounter),
+        guardId: guard._id,
+        guardEmpId: guard.roll_no,
+        guardName: guard.first_name,
+        dutyPlaces: [],
+      });
       renderDropZone();
       renderGuardsList();
     }
 
-    function assignGuardToFirstEmpty(guardId) {
-      const target = pendingDuties.find(d => !d.guardEmpId);
-      if (!target) {
-        alert('Drag a main place into the Duty Assignments column first, then drop a guard onto its card.');
+    // A place dropped onto a guard card is added to that guard's list.
+    function addPlaceToCard(placeId, clientId) {
+      const place = placesData.find(p => p._id === placeId);
+      const target = pendingDuties.find(d => d.clientId === clientId);
+      if (!place || !target) return;
+      if (usedPlaceKeys().has(place.place.toLowerCase())) {
+        alert(`"${place.place}" is already assigned for this date.`);
         return;
       }
-      assignGuardToClientId(guardId, target.clientId);
+      target.dutyPlaces.push(place.place);
+      renderDropZone();
+      renderPlacesList();
     }
 
     const placesList = document.getElementById('assignPlacesList');
@@ -2653,38 +2623,32 @@ function attachHandlers(section) {
       let payload;
       try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch (err) { return; }
 
-      if (payload.type === 'place') {
-        const place = placesData.find(p => p._id === payload.id);
-        if (!place) return;
-        if (usedMainPlaceKeys().has(place.mainPlace.toLowerCase())) {
-          alert(`${place.mainPlace} already has a duty for this date.`);
-          return;
-        }
-        pendingDuties.push({
-          clientId: 'd' + (++clientIdCounter),
-          dutyPlaceId: place._id,
-          mainPlace: place.mainPlace,
-          subPlaces: place.subPlaces.map(s => s.name),
-          guardId: null,
-          guardEmpId: null,
-          guardName: null,
-        });
-        renderDropZone();
-        renderPlacesList();
+      if (payload.type === 'guard') {
+        addGuardCard(payload.id);
         return;
       }
 
-      if (payload.type === 'guard') {
-        const slot = e.target.closest('.mini-guard-slot');
-        if (slot) {
-          assignGuardToClientId(payload.id, slot.dataset.clientId);
-        } else {
-          assignGuardToFirstEmpty(payload.id);
+      if (payload.type === 'place') {
+        if (pendingDuties.length === 0) {
+          alert('Drag a guard into the Duty Assignments column first, then drop duty places onto the guard\'s card.');
+          return;
         }
+        // Dropped on a specific card -> that card; anywhere else -> the latest card.
+        const card = e.target.closest('.duty-mini-card[data-client-id]');
+        const clientId = card ? card.dataset.clientId : pendingDuties[pendingDuties.length - 1].clientId;
+        addPlaceToCard(payload.id, clientId);
       }
     });
 
     dropZone.addEventListener('click', (e) => {
+      const chipBtn = e.target.closest('.chip-remove');
+      if (chipBtn) {
+        const duty = pendingDuties.find(d => d.clientId === chipBtn.dataset.clientId);
+        if (duty) duty.dutyPlaces.splice(parseInt(chipBtn.dataset.index, 10), 1);
+        renderDropZone();
+        renderPlacesList();
+        return;
+      }
       const removeBtn = e.target.closest('.remove-btn');
       if (!removeBtn) return;
       pendingDuties = pendingDuties.filter(d => d.clientId !== removeBtn.dataset.clientId);
@@ -2693,43 +2657,38 @@ function attachHandlers(section) {
       renderPlacesList();
     });
 
-    // ---------- Preview -> confirm checkbox -> Submit (requirement 4) ----------
+    // ---------- Preview -> confirm checkbox -> Submit ----------
     document.getElementById('previewAssignBtn').addEventListener('click', () => {
       const dutyDate = document.getElementById('assignDutyDate').value;
 
       if (!dutyDate) { alert('Pick a duty date first.'); return; }
       if (dutyDate < todayISODate()) { alert('Duty date cannot be in the past. Please choose today or a later date.'); return; }
-      // Nothing to show at all - no new duties dragged in AND nothing already
-      // assigned for this date either. If some are already assigned, still
-      // let Preview open so those can be reviewed even with 0 new ones.
       if (pendingDuties.length === 0 && existingDutiesForDate.length === 0) {
-        alert('Drag at least one main place (and a guard) into the Duty Assignments column first.');
+        alert('Drag at least one guard (and some duty places) into the Duty Assignments column first.');
         return;
       }
-      const incomplete = pendingDuties.filter(d => !d.guardEmpId);
-      if (incomplete.length > 0) { alert(`${incomplete.length} duty card(s) still need a guard dropped onto them before you can preview.`); return; }
+      const incomplete = pendingDuties.filter(d => d.dutyPlaces.length === 0);
+      if (incomplete.length > 0) { alert(`${incomplete.length} guard card(s) still need at least one duty place dropped onto them before you can preview.`); return; }
 
       openModal(`
         <div>
           <div class="card-title" style="margin-bottom:10px;">Preview — ${pendingDuties.length} new duty assignment(s) for ${dutyDate}${existingDutiesForDate.length ? ` (${existingDutiesForDate.length} already assigned)` : ''}</div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>#</th><th>Guard</th><th>Main Place</th><th>Sub Places</th><th>Status</th></tr></thead>
+              <thead><tr><th>#</th><th>Guard</th><th>Duty Places</th><th>Status</th></tr></thead>
               <tbody>
                 ${existingDutiesForDate.map((d, i) => `
                   <tr>
                     <td class="serial-col">${i + 1}</td>
                     <td><b>${escapeHtml(d.guardName)}</b> <span style="color:var(--ink-500);">(${escapeHtml(d.guardEmpId)})</span></td>
-                    <td class="preserve-space">${escapeHtml(d.mainPlace)}</td>
-                    <td>${(d.subPlaces || []).map(s => `<span class="chip">${s}</span>`).join('')}</td>
+                    <td>${(d.dutyPlaces || []).map(p => `<span class="chip preserve-space">${escapeHtml(p)}</span>`).join('')}</td>
                     <td><span class="badge badge-neutral">Already assigned</span></td>
                   </tr>`).join('')}
                 ${pendingDuties.map((d, i) => `
                   <tr>
                     <td class="serial-col">${existingDutiesForDate.length + i + 1}</td>
-                    <td><b>${escapeHtml(d.guardName)}</b></td>
-                    <td class="preserve-space">${escapeHtml(d.mainPlace)}</td>
-                    <td>${d.subPlaces.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join('')}</td>
+                    <td><b>${escapeHtml(d.guardName)}</b> <span style="color:var(--ink-500);">(${escapeHtml(d.guardEmpId)})</span></td>
+                    <td>${d.dutyPlaces.map(p => `<span class="chip preserve-space">${escapeHtml(p)}</span>`).join('')}</td>
                     <td><span class="badge badge-amber">New</span></td>
                   </tr>`).join('')}
               </tbody>
@@ -2743,7 +2702,7 @@ function attachHandlers(section) {
             <div class="error-text" id="assignSubmitError"></div>
             <button class="btn btn-primary" id="submitAssignBtn" style="width:auto; padding:10px 22px;" disabled>Submit</button>
           ` : `
-            <p style="color:var(--ink-500); font-size:13px; margin-top:16px;">No new duty assignments to submit - drag a main place and a guard into the Duty Assignments column to add one.</p>
+            <p style="color:var(--ink-500); font-size:13px; margin-top:16px;">No new duty assignments to submit - drag a guard into the Duty Assignments column and drop duty places onto the card to add one.</p>
           `}
           <div class="modal-actions" style="margin-top:14px;">
             <button type="button" class="btn btn-outline" id="closeAssignPreviewBtn">Close</button>
@@ -2751,8 +2710,6 @@ function attachHandlers(section) {
         </div>`, { maxWidth: '900px' });
       document.getElementById('closeAssignPreviewBtn').addEventListener('click', closeModal);
 
-      // Only wire up confirm/submit when there's something new to submit -
-      // the elements above only exist in that branch of the template.
       if (pendingDuties.length === 0) return;
 
       document.getElementById('confirmAssignCheck').addEventListener('change', (e) => {
@@ -2772,9 +2729,7 @@ function attachHandlers(section) {
             assignments: pendingDuties.map(d => ({
               guardEmpId: d.guardEmpId,
               guardName: d.guardName,
-              dutyPlaceId: d.dutyPlaceId,
-              mainPlace: d.mainPlace,
-              subPlaces: d.subPlaces,
+              dutyPlaces: d.dutyPlaces,
             })),
           });
           if (res.skippedCount > 0) {
@@ -2785,9 +2740,6 @@ function attachHandlers(section) {
           }
           pendingDuties = [];
           closeModal();
-          // Requirement 4/5: refresh what's "already assigned" for this date
-          // so what was just submitted shows up locked, and the board stays
-          // on the same date, ready to accept more drags right away.
           await loadExistingDutiesForDate(dutyDate);
         } catch (err) {
           errBox.textContent = err.message;
@@ -2816,7 +2768,7 @@ function attachHandlers(section) {
         wrap.innerHTML = `
           <div class="table-scroll">
             <table>
-              <thead><tr><th>#</th><th>Guard</th><th>Main Place</th><th>Sub Places</th><th>Duty Date</th><th>Status</th><th>Added On</th><th></th></tr></thead>
+              <thead><tr><th>#</th><th>Guard</th><th>Duty Places</th><th>Duty Date</th><th>Status</th><th>Added On</th><th></th></tr></thead>
               <tbody>
                 ${res.data.map((a, i) => {
                   const completed = isPastDutyDate(a.dutyDate);
@@ -2824,8 +2776,7 @@ function attachHandlers(section) {
                   <tr data-id="${a._id}">
                     <td class="serial-col">${startSerial + i + 1}</td>
                     <td><b>${escapeHtml(a.guardName)}</b><br><span style="color:var(--ink-500); font-size:11.5px;">${escapeHtml(a.guardEmpId)}</span></td>
-                    <td class="preserve-space">${escapeHtml(a.mainPlace)}</td>
-                    <td>${a.subPlaces.map(s => `<span class="chip">${s}</span>`).join('')}</td>
+                    <td>${(a.dutyPlaces || []).map(p => `<span class="chip preserve-space">${escapeHtml(p)}</span>`).join('')}</td>
                     <td><span class="badge badge-amber">${escapeHtml(a.dateRange)}</span></td>
                     <td><span class="badge ${completed ? 'badge-neutral' : 'badge-success'}">${completed ? 'Completed' : 'Upcoming'}</span></td>
                     <td style="white-space:nowrap; color:var(--ink-300); font-size:12.5px;">${formatDateTime(a.createdAt)}</td>
@@ -2865,7 +2816,7 @@ function attachHandlers(section) {
       document.querySelectorAll('#tab-showAssigned .delete-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', async () => {
           const a = currentAssignments.find(r => r._id === btn.dataset.id);
-          if (!confirm(`Remove ${a ? a.guardName : 'this guard'}'s duty at "${a ? a.mainPlace : 'this place'}"? This cannot be undone.`)) return;
+          if (!confirm(`Remove ${a ? a.guardName : 'this guard'}'s duty${a && a.dutyPlaces ? ` at "${a.dutyPlaces.join(', ')}"` : ''}? This cannot be undone.`)) return;
           try {
             await deleteDutyAssignmentViaApi(btn.dataset.id);
             loadAssignedDuties();
@@ -2881,6 +2832,13 @@ function attachHandlers(section) {
       if (!a) return;
       await ensureBoardDataLoaded();
 
+      // every existing duty place, plus any already on this duty that has since been renamed/removed
+      const selectedKeys = new Set((a.dutyPlaces || []).map(p => String(p).toLowerCase()));
+      const editPlaceOptions = placesData.map(p => p.place);
+      (a.dutyPlaces || []).forEach(p => {
+        if (!editPlaceOptions.some(o => o.toLowerCase() === String(p).toLowerCase())) editPlaceOptions.push(p);
+      });
+
       const dutyDateVal = a.dutyDate ? new Date(a.dutyDate).toISOString().slice(0, 10) : '';
 
       openModal(`
@@ -2893,15 +2851,14 @@ function attachHandlers(section) {
           </select>
         </div>
         <div class="field">
-          <label>Main place</label>
-          <select id="editAssignPlace">
-            <option value="">Select place</option>
-            ${placesData.map(p => `<option value="${p._id}" ${p.mainPlace === a.mainPlace ? 'selected' : ''}>${escapeHtml(p.mainPlace)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="field">
-          <label style="display:block; font-size:12.5px; color:var(--ink-300); margin-bottom:6px;">Sub places (assigned automatically)</label>
-          <div id="editAssignSubPlaces">${a.subPlaces.map(s => `<span class="chip">${s}</span>`).join('')}</div>
+          <label>Duty places</label>
+          <div id="editAssignPlaces" class="place-check-list">
+            ${editPlaceOptions.map(pl => `
+              <label class="place-check-row">
+                <input type="checkbox" class="edit-place-check" value="${escapeHtml(pl)}" ${selectedKeys.has(pl.toLowerCase()) ? 'checked' : ''} />
+                <span class="preserve-space">${escapeHtml(pl)}</span>
+              </label>`).join('') || '<span style="color:var(--ink-500); font-size:12.5px;">No duty places available</span>'}
+          </div>
         </div>
         <div class="field"><label>Duty date</label><input type="date" id="editAssignDate" value="${dutyDateVal}" min="${todayISODate()}" /></div>
         <div class="error-text" id="editAssignError"></div>
@@ -2911,15 +2868,6 @@ function attachHandlers(section) {
         </div>
       `);
 
-      let currentSubPlaces = a.subPlaces.slice();
-      document.getElementById('editAssignPlace').addEventListener('change', (e) => {
-        const place = placesData.find(p => p._id === e.target.value);
-        currentSubPlaces = place ? place.subPlaces.map(s => s.name) : [];
-        document.getElementById('editAssignSubPlaces').innerHTML = currentSubPlaces.length
-          ? currentSubPlaces.map(s => `<span class="chip">${s}</span>`).join('')
-          : '<span style="color:var(--ink-500); font-size:12.5px;">No sub places for this place</span>';
-      });
-
       document.getElementById('editAssignCancelBtn').addEventListener('click', closeModal);
       document.getElementById('editAssignSaveBtn').addEventListener('click', async () => {
         const errBox = document.getElementById('editAssignError');
@@ -2927,12 +2875,11 @@ function attachHandlers(section) {
 
         const guardSelect = document.getElementById('editAssignGuard');
         const guardOpt = guardSelect.options[guardSelect.selectedIndex];
-        const placeSelect = document.getElementById('editAssignPlace');
-        const placeOpt = placeSelect.options[placeSelect.selectedIndex];
+        const chosenPlaces = [...document.querySelectorAll('#editAssignPlaces .edit-place-check:checked')].map(c => c.value);
         const dutyDate = document.getElementById('editAssignDate').value;
 
-        if (!guardSelect.value || !placeSelect.value || !dutyDate || currentSubPlaces.length === 0) {
-          errBox.textContent = 'Guard, main place, and duty date are all required.';
+        if (!guardSelect.value || chosenPlaces.length === 0 || !dutyDate) {
+          errBox.textContent = 'Guard, at least one duty place, and duty date are all required.';
           return;
         }
         if (dutyDate < todayISODate()) {
@@ -2946,9 +2893,7 @@ function attachHandlers(section) {
           await updateDutyAssignmentViaApi(id, {
             guardEmpId: guardOpt.dataset.empId,
             guardName: guardOpt.dataset.name,
-            dutyPlaceId: placeSelect.value,
-            mainPlace: placeOpt.textContent,
-            subPlaces: currentSubPlaces,
+            dutyPlaces: chosenPlaces,
             dutyDate,
           });
           closeModal();
@@ -2992,8 +2937,7 @@ function attachHandlers(section) {
         const rows = res.data.map((a, i) => ({
           serial: i + 1,
           guard: `${a.guardName} (${a.guardEmpId})`,
-          mainPlace: a.mainPlace,
-          subPlaces: a.subPlaces.join(', '),
+          dutyPlaces: (a.dutyPlaces || []).join(', '),
           dateRange: a.dateRange,
           status: isPastDutyDate(a.dutyDate) ? 'Completed' : 'Upcoming',
           addedOn: formatDateTime(a.createdAt),
@@ -3002,8 +2946,7 @@ function attachHandlers(section) {
           [
             { header: '#', key: 'serial' },
             { header: 'Guard', key: 'guard' },
-            { header: 'Main Place', key: 'mainPlace' },
-            { header: 'Sub Places', key: 'subPlaces' },
+            { header: 'Duty Places', key: 'dutyPlaces' },
             { header: 'Duty Date', key: 'dateRange' },
             { header: 'Status', key: 'status' },
             { header: 'Added On', key: 'addedOn' },

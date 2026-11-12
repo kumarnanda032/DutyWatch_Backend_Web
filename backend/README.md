@@ -100,16 +100,16 @@ Needs Node 18+ (uses the built-in `fetch`).
 
 ## Duty places (no main / sub places)
 
-There is a single level: a **duty place** is `{ _id, name, createdAt, updatedAt }`
-and each one has its own QR code (the QR text is the exact `name`).
+There is a single level: a **duty place** is `{ _id, place, createdAt, updatedAt }`
+and each one has its own QR code (the QR text is the exact `place`).
 
 | Endpoint | Body / response |
 |----------|-----------------|
-| `GET /api/duty-places?search=&page=&limit=` | `{ data:[{_id,name,...}], total, page, limit, totalPages }` |
-| `GET /api/duty-places/options` | `{ data:[{_id,name,createdAt}] }` sorted by name (pickers, QR dropdown) |
+| `GET /api/duty-places?search=&page=&limit=` | `{ data:[{_id,place,...}], total, page, limit, totalPages }` |
+| `GET /api/duty-places/options` | `{ data:[{_id,place,createdAt}] }` sorted by place (pickers, QR dropdown) |
 | `GET /api/duty-places/stats` | `{ totalDutyPlaces }` |
-| `POST /api/duty-places` (admin) | `{ name }` -> `201` the new place, `409` if the name exists |
-| `PUT /api/duty-places/:id` (admin) | `{ name }` (rename; old assignments/scans keep the old text) |
+| `POST /api/duty-places` (admin) | `{ place }` -> `201` the new place, `409` if the name exists |
+| `PUT /api/duty-places/:id` (admin) | `{ place }` (rename; old assignments/scans keep the old text) |
 | `DELETE /api/duty-places/:id` (admin) | `{ deleted:true, name }` |
 
 Removed: `POST /api/duty-places/:id/sub-places`, and the `mainPlace` / `subPlaces` fields.
