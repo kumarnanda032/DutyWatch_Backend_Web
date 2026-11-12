@@ -58,6 +58,22 @@ app.set('query parser', 'simple');
 app.use(helmet({
   // Uploaded photos are loaded by the web dashboard / mobile app from here.
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // The dashboard pages (served below) use inline <script>/onclick handlers,
+  // jsPDF/xlsx/qrcode from cdnjs and Google Fonts.
+  contentSecurityPolicy: {
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'self'"],
+    },
+  },
 }));
 
 app.use(express.json());
@@ -100,6 +116,12 @@ app.get('/api/health', (req, res) => {
 app.use('/api', (req, res) => {
   res.status(404).json({ error: `No API route: ${req.method} ${req.originalUrl}` });
 });
+
+// Serve the web dashboard from this same server (same origin as /api), so the
+// frontend's relative calls like fetch('/api/auth/login') just work - locally
+// and on Render - without a separate static server or proxy.
+const FRONTEND_DIR = path.join(__dirname, '..', 'web_frontend');
+app.use(express.static(FRONTEND_DIR, { extensions: ['html'] }));
 
 // Final safety net: turn any uncaught error into JSON instead of Express's
 // default HTML error page, so the frontend always gets parseable JSON back.
