@@ -8,9 +8,7 @@ const DutyAssignmentSchema = new Schema(
     shiftEnd: { type: Date, required: true },
     guardEmpId: { type: String, required: true },
     guardName: { type: String, required: true },
-    dutyPlaceId: { type: Schema.Types.ObjectId, ref: 'DutyPlace' },
-    mainPlace: { type: String, required: true },
-    subPlaces: { type: [String], required: true },
+    dutyPlaces: { type: [String], required: true },
     assignedBy: { type: String, default: 'admin' },
   },
   { timestamps: true }

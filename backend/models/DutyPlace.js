@@ -2,24 +2,20 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 /**
- * A duty place is a main site ("main place") containing one or more
- * sub-places. Names are stored exactly as entered (only leading/trailing
- * whitespace is trimmed - internal spaces and casing are left untouched).
+ * A duty place is a single location a guard can be assigned to and scan a QR
+ * code at (e.g. "North Gate", "Reception Lobby"). There are no main places or
+ * sub-places - every duty place stands on its own and has its own QR code.
+ *
+ * The name is stored exactly as entered (only leading/trailing whitespace is
+ * trimmed - internal spaces and casing are left untouched), because the QR
+ * code for the place encodes this exact text.
  *
  * `timestamps: true` gives every document createdAt / updatedAt, which the
  * admin UI shows as "Added On" in the Existing Duty Places tab.
  */
-const SubPlaceSchema = new Schema(
-  {
-    name: { type: String, required: true, trim: true },
-  },
-  { _id: false }
-);
-
 const DutyPlaceSchema = new Schema(
   {
-    mainPlace: { type: String, required: true, unique: true, trim: true },
-    subPlaces: { type: [SubPlaceSchema], default: [] },
+    name: { type: String, required: true, unique: true, trim: true },
   },
   { timestamps: true }
 );

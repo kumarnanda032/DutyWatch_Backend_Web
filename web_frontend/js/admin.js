@@ -431,47 +431,20 @@ const renderers = {
   `,
 
   addDutyPlaces: () => `
-    ${sectionHead('Duty Places', 'A main place (site) contains one or more sub-places, each with its own QR code.')}
+    ${sectionHead('Duty Places', 'Add the places guards are assigned to. Each duty place has its own QR code.')}
 
     <div class="tabs" id="dutyPlaceTabs">
-      <button class="tab-btn active" data-tab="newPlace" type="button">New Place</button>
-      <button class="tab-btn" data-tab="addSubPlaces" type="button">Add Sub Places</button>
+      <button class="tab-btn active" data-tab="newPlace" type="button">Add Duty Place</button>
       <button class="tab-btn" data-tab="existingPlaces" type="button">Existing Duty Places</button>
       <button class="tab-btn" data-tab="generateQr" type="button">Generate QR Code</button>
     </div>
 
     <div class="tab-panel" id="tab-newPlace">
       <div class="card" style="max-width:520px;">
-        <div class="card-title">New duty place</div>
-        <div class="field"><label>Main place</label><input id="mainPlaceInput" placeholder="e.g. North Campus" /></div>
-        <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
-          <div style="flex:1;"><label style="display:block; font-size:12.5px; color:var(--ink-300); margin-bottom:6px;">Sub place</label><input id="subPlaceInput" placeholder="e.g. Gate C" /></div>
-          <button class="btn btn-outline" id="addSubPlaceBtn" type="button">+</button>
-        </div>
-        <div id="pendingSubPlaces" style="margin:10px 0;"></div>
+        <div class="card-title">Add Duty Place</div>
+        <div class="field"><label>Duty place</label><input id="dutyPlaceNameInput" placeholder="e.g. North Gate" /></div>
         <div class="error-text" id="newPlaceError"></div>
-        <button class="btn btn-primary" id="saveDutyPlaceBtn" style="width:auto; padding:10px 22px;">Save Duty Place</button>
-      </div>
-    </div>
-
-    <div class="tab-panel" id="tab-addSubPlaces" style="display:none;">
-      <div class="card" style="max-width:520px;">
-        <div class="card-title">Add sub places to an existing main place</div>
-        <div class="field">
-          <label>Main place</label>
-          <select id="subPlacesMainSelect"><option value="">Select a main place</option></select>
-        </div>
-        <div class="field">
-          <label style="display:block; font-size:12.5px; color:var(--ink-300); margin-bottom:6px;">Existing sub places</label>
-          <div id="existingSubPlacesChips"><span style="color:var(--ink-500); font-size:12.5px;">Select a main place above</span></div>
-        </div>
-        <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
-          <div style="flex:1;"><label style="display:block; font-size:12.5px; color:var(--ink-300); margin-bottom:6px;">New sub place</label><input id="newSubPlaceInput" placeholder="e.g. Gate D" disabled /></div>
-          <button class="btn btn-outline" id="addNewSubPlaceBtn" type="button" disabled>+</button>
-        </div>
-        <div id="pendingNewSubPlaces" style="margin:10px 0;"></div>
-        <div class="error-text" id="addSubPlacesError"></div>
-        <button class="btn btn-primary" id="saveSubPlacesBtn" style="width:auto; padding:10px 22px;" disabled>Add Sub Places</button>
+        <button class="btn btn-primary" id="saveDutyPlaceBtn" style="width:auto; padding:10px 22px;">Add Duty Place</button>
       </div>
     </div>
 
@@ -479,7 +452,7 @@ const renderers = {
       <div class="card">
         <div class="data-toolbar">
           <div class="search-field">
-            <input type="text" id="dutyPlaceSearchInput" placeholder="Search by main place or sub place..." />
+            <input type="text" id="dutyPlaceSearchInput" placeholder="Search duty places..." />
           </div>
           <div class="toolbar-right">
             <div class="page-size-field">
@@ -507,14 +480,10 @@ const renderers = {
 
     <div class="tab-panel" id="tab-generateQr" style="display:none;">
       <div class="card" style="max-width:480px;">
-        <div class="card-title">Generate a QR code for a sub place</div>
-        <div class="field">
-          <label>Main place</label>
-          <select id="qrMainPlaceSelect"><option value="">Select a main place</option></select>
-        </div>
+        <div class="card-title">Generate a QR code for a duty place</div>
         <div class="field" style="margin-bottom:0;">
-          <label>Sub place</label>
-          <select id="qrSubPlaceSelect" disabled><option value="">Select a main place first</option></select>
+          <label>Duty place</label>
+          <select id="qrPlaceSelect"><option value="">Select a duty place</option></select>
         </div>
         <div class="error-text" id="qrGenerateError"></div>
       </div>
@@ -2101,7 +2070,7 @@ function attachHandlers(section) {
 
   if (section === 'addDutyPlaces') {
     // ---------- Tab switching ----------
-    const tabNames = ['newPlace', 'addSubPlaces', 'existingPlaces', 'generateQr'];
+    const tabNames = ['newPlace', 'existingPlaces', 'generateQr'];
     document.querySelectorAll('#dutyPlaceTabs .tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('#dutyPlaceTabs .tab-btn').forEach(b => b.classList.remove('active'));
@@ -2109,139 +2078,38 @@ function attachHandlers(section) {
         tabNames.forEach(t => {
           document.getElementById('tab-' + t).style.display = (t === btn.dataset.tab) ? 'block' : 'none';
         });
-        if (btn.dataset.tab === 'addSubPlaces') loadMainPlaceOptions();
         if (btn.dataset.tab === 'existingPlaces') loadExistingPlaces();
-        if (btn.dataset.tab === 'generateQr') loadQrMainPlaceOptions();
+        if (btn.dataset.tab === 'generateQr') loadQrPlaceOptions();
       });
     });
 
-    // Renders a list of pending chip strings into a container, each with a
-    // small "x" to remove it before saving. Shared shape used by tab 1,
-    // tab 2, and the "add sub place" quick-modal.
-    function renderPendingChips(containerId, list, onRemove) {
-      const box = document.getElementById(containerId);
-      box.innerHTML = list.map((s, i) =>
-        `<span class="chip">${escapeHtml(s)} <span class="chip-remove" data-i="${i}">✕</span></span>`).join('');
-      box.querySelectorAll('.chip-remove').forEach(x => {
-        x.addEventListener('click', () => { list.splice(parseInt(x.dataset.i, 10), 1); onRemove(); });
-      });
-    }
+    // ---------- Tab 1: Add Duty Place ----------
+    const nameInput = document.getElementById('dutyPlaceNameInput');
+    const saveBtn = document.getElementById('saveDutyPlaceBtn');
 
-    // ---------- Tab 1: New Place ----------
-    const pending = [];
-    const renderPending = () => renderPendingChips('pendingSubPlaces', pending, renderPending);
-
-    const addPendingFrom = (inputId, list, rerender) => {
-      const input = document.getElementById(inputId);
-      const val = input.value.trim();
-      if (val && !list.some(p => p.toLowerCase() === val.toLowerCase())) {
-        list.push(val);
-        input.value = '';
-        rerender();
-      }
-      input.focus();
-    };
-
-    document.getElementById('addSubPlaceBtn').addEventListener('click', () => addPendingFrom('subPlaceInput', pending, renderPending));
-    document.getElementById('subPlaceInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubPlaceBtn').click(); }
-    });
-
-    document.getElementById('saveDutyPlaceBtn').addEventListener('click', async () => {
+    async function saveDutyPlace() {
       const errBox = document.getElementById('newPlaceError');
       errBox.textContent = '';
-      const main = document.getElementById('mainPlaceInput').value.trim();
-      if (!main || pending.length === 0) { errBox.textContent = 'Enter a main place and at least one sub place.'; return; }
+      const name = nameInput.value.trim();
+      if (!name) { errBox.textContent = 'Enter a duty place.'; return; }
 
-      const btn = document.getElementById('saveDutyPlaceBtn');
-      btn.disabled = true;
+      saveBtn.disabled = true;
       try {
-        await addDutyPlaceViaApi({ mainPlace: main, subPlaces: pending.slice() });
-        document.getElementById('mainPlaceInput').value = '';
-        pending.length = 0;
-        renderPending();
-        alert('Duty place saved.');
+        await addDutyPlaceViaApi({ name });
+        nameInput.value = '';
+        alert('Duty place added.');
       } catch (err) {
         errBox.textContent = err.message;
       } finally {
-        btn.disabled = false;
-      }
-    });
-
-    // ---------- Tab 2: Add Sub Places ----------
-    let mainPlaceOptions = [];
-    const pendingNew = [];
-    const renderPendingNew = () => renderPendingChips('pendingNewSubPlaces', pendingNew, renderPendingNew);
-
-    async function loadMainPlaceOptions() {
-      const select = document.getElementById('subPlacesMainSelect');
-      const previous = select.value;
-      select.innerHTML = '<option value="">Loading...</option>';
-      try {
-        const res = await fetchDutyPlaceOptionsViaApi();
-        mainPlaceOptions = res.data;
-        select.innerHTML = '<option value="">Select a main place</option>' +
-          mainPlaceOptions.map(p => `<option value="${p._id}">${escapeHtml(p.mainPlace)}</option>`).join('');
-        if (previous && mainPlaceOptions.some(p => p._id === previous)) {
-          select.value = previous;
-          select.dispatchEvent(new Event('change'));
-        }
-      } catch (err) {
-        select.innerHTML = '<option value="">Could not load places</option>';
+        saveBtn.disabled = false;
       }
     }
-
-    document.getElementById('subPlacesMainSelect').addEventListener('change', (e) => {
-      const id = e.target.value;
-      const chipsBox = document.getElementById('existingSubPlacesChips');
-      const input = document.getElementById('newSubPlaceInput');
-      const addBtn = document.getElementById('addNewSubPlaceBtn');
-      const saveBtn = document.getElementById('saveSubPlacesBtn');
-
-      pendingNew.length = 0;
-      renderPendingNew();
-
-      if (!id) {
-        chipsBox.innerHTML = '<span style="color:var(--ink-500); font-size:12.5px;">Select a main place above</span>';
-        input.disabled = true; addBtn.disabled = true; saveBtn.disabled = true;
-        return;
-      }
-      const place = mainPlaceOptions.find(p => p._id === id);
-      chipsBox.innerHTML = (place && place.subPlaces.length)
-        ? place.subPlaces.map(s => `<span class="chip">${escapeHtml(s.name)}</span>`).join('')
-        : '<span style="color:var(--ink-500); font-size:12.5px;">No sub places yet</span>';
-      input.disabled = false; addBtn.disabled = false; saveBtn.disabled = false;
+    saveBtn.addEventListener('click', saveDutyPlace);
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); saveDutyPlace(); }
     });
 
-    document.getElementById('addNewSubPlaceBtn').addEventListener('click', () => addPendingFrom('newSubPlaceInput', pendingNew, renderPendingNew));
-    document.getElementById('newSubPlaceInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addNewSubPlaceBtn').click(); }
-    });
-
-    document.getElementById('saveSubPlacesBtn').addEventListener('click', async () => {
-      const errBox = document.getElementById('addSubPlacesError');
-      errBox.textContent = '';
-      const id = document.getElementById('subPlacesMainSelect').value;
-      if (!id || pendingNew.length === 0) { errBox.textContent = 'Select a main place and add at least one sub place.'; return; }
-
-      const btn = document.getElementById('saveSubPlacesBtn');
-      btn.disabled = true;
-      try {
-        await addSubPlacesViaApi(id, pendingNew.slice());
-        pendingNew.length = 0;
-        renderPendingNew();
-        alert('Sub places added.');
-        await loadMainPlaceOptions();
-        document.getElementById('subPlacesMainSelect').value = id;
-        document.getElementById('subPlacesMainSelect').dispatchEvent(new Event('change'));
-      } catch (err) {
-        errBox.textContent = err.message;
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    // ---------- Tab 3: Existing Duty Places ----------
+    // ---------- Tab 2: Existing Duty Places ----------
     const state = { search: '', page: 1, limit: 10 };
     let currentPlaces = [];
 
@@ -2249,23 +2117,21 @@ function attachHandlers(section) {
       currentPlaces = res.data;
       const wrap = document.getElementById('dutyPlacesTableWrap');
       if (!res.data.length) {
-        wrap.innerHTML = `<p style="color:var(--ink-500); font-size:13px;">${state.search ? 'No matching duty places found.' : 'No duty places yet. Add one from the "New Place" tab.'}</p>`;
+        wrap.innerHTML = `<p style="color:var(--ink-500); font-size:13px;">${state.search ? 'No matching duty places found.' : 'No duty places yet. Add one from the "Add Duty Place" tab.'}</p>`;
       } else {
         const startSerial = (res.page - 1) * res.limit;
         wrap.innerHTML = `
           <div class="table-scroll">
             <table>
-              <thead><tr><th>#</th><th>Main Place</th><th>Sub Places</th><th>Added On</th><th></th></tr></thead>
+              <thead><tr><th>#</th><th>Duty Place</th><th>Added On</th><th></th></tr></thead>
               <tbody>
                 ${res.data.map((p, i) => `
                   <tr data-id="${p._id}">
                     <td class="serial-col">${startSerial + i + 1}</td>
-                    <td><b class="preserve-space">${escapeHtml(p.mainPlace)}</b></td>
-                    <td>${p.subPlaces.map(s => `<span class="chip">${escapeHtml(s.name)}</span>`).join('') || '<span style="color:var(--ink-500); font-size:12px;">No sub places</span>'}</td>
+                    <td><b class="preserve-space">${escapeHtml(p.name)}</b></td>
                     <td style="white-space:nowrap; color:var(--ink-300); font-size:12.5px;">${formatDateTime(p.createdAt)}</td>
                     <td>
                       <div class="row-actions">
-                        <button class="add-subplace-btn" data-id="${p._id}" title="Add sub place">➕</button>
                         <button class="edit-place-btn" data-id="${p._id}" title="Edit">✏️</button>
                         <button class="delete-place-btn" data-id="${p._id}" title="Delete">🗑</button>
                       </div>
@@ -2293,16 +2159,13 @@ function attachHandlers(section) {
     }
 
     function wirePlaceRowActions() {
-      document.querySelectorAll('.add-subplace-btn').forEach(btn => {
-        btn.addEventListener('click', () => openAddSubPlaceModal(btn.dataset.id));
-      });
       document.querySelectorAll('.edit-place-btn').forEach(btn => {
         btn.addEventListener('click', () => openEditPlaceModal(btn.dataset.id));
       });
       document.querySelectorAll('.delete-place-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const p = currentPlaces.find(r => r._id === btn.dataset.id);
-          if (!confirm(`Delete "${p ? p.mainPlace : 'this place'}" and all its sub places? This cannot be undone.`)) return;
+          if (!confirm(`Delete "${p ? p.name : 'this duty place'}"? This cannot be undone.`)) return;
           try {
             await deleteDutyPlaceViaApi(btn.dataset.id);
             loadExistingPlaces();
@@ -2313,101 +2176,27 @@ function attachHandlers(section) {
       });
     }
 
-    function openAddSubPlaceModal(id) {
-      const p = currentPlaces.find(r => r._id === id);
-      if (!p) return;
-      const quickPending = [];
-      openModal(`
-        <h3 class="preserve-space">Add sub places — ${escapeHtml(p.mainPlace)}</h3>
-        <div style="margin-bottom:10px;">${p.subPlaces.map(s => `<span class="chip">${escapeHtml(s.name)}</span>`).join('') || '<span style="color:var(--ink-500); font-size:12.5px;">No sub places yet</span>'}</div>
-        <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
-          <div style="flex:1;"><label style="display:block; font-size:12.5px; color:var(--ink-300); margin-bottom:6px;">New sub place</label><input id="quickSubPlaceInput" placeholder="e.g. Gate D" /></div>
-          <button class="btn btn-outline" type="button" id="quickAddBtn">+</button>
-        </div>
-        <div id="quickNewChips" style="margin:10px 0;"></div>
-        <div class="error-text" id="quickAddError"></div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-outline" id="quickCancelBtn">Cancel</button>
-          <button type="button" class="btn btn-primary" id="quickSaveBtn" style="width:auto; padding:10px 20px;">Add</button>
-        </div>
-      `);
-      const renderQuick = () => renderPendingChips('quickNewChips', quickPending, renderQuick);
-      document.getElementById('quickAddBtn').addEventListener('click', () => addPendingFrom('quickSubPlaceInput', quickPending, renderQuick));
-      document.getElementById('quickSubPlaceInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('quickAddBtn').click(); }
-      });
-      document.getElementById('quickCancelBtn').addEventListener('click', closeModal);
-      document.getElementById('quickSaveBtn').addEventListener('click', async () => {
-        const errBox = document.getElementById('quickAddError');
-        if (quickPending.length === 0) { errBox.textContent = 'Add at least one sub place.'; return; }
-        const btn = document.getElementById('quickSaveBtn');
-        btn.disabled = true;
-        try {
-          await addSubPlacesViaApi(id, quickPending.slice());
-          closeModal();
-          loadExistingPlaces();
-        } catch (err) {
-          errBox.textContent = err.message;
-          btn.disabled = false;
-        }
-      });
-    }
-
     function openEditPlaceModal(id) {
       const p = currentPlaces.find(r => r._id === id);
       if (!p) return;
-      const names = p.subPlaces.map(s => s.name);
       openModal(`
         <h3>Edit duty place</h3>
-        <div class="field"><label>Main place</label><input id="editMainPlaceInput" value="${escapeHtml(p.mainPlace)}" /></div>
-        <div class="field">
-          <label style="display:block; font-size:12.5px; color:var(--ink-300); margin-bottom:6px;">Sub places</label>
-          <div id="editSubPlaceRows"></div>
-        </div>
-        <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
-          <div style="flex:1;"><input id="editNewSubPlaceInput" placeholder="Add another sub place" /></div>
-          <button class="btn btn-outline" type="button" id="editAddSubPlaceBtn">+</button>
-        </div>
+        <div class="field"><label>Duty place</label><input id="editPlaceNameInput" value="${escapeHtml(p.name)}" /></div>
         <div class="error-text" id="editPlaceError"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline" id="editCancelBtn">Cancel</button>
           <button type="button" class="btn btn-primary" id="editSaveBtn" style="width:auto; padding:10px 20px;">Save Changes</button>
         </div>
       `);
-      const rowsBox = document.getElementById('editSubPlaceRows');
-      const renderRows = () => {
-        rowsBox.innerHTML = names.length ? names.map((n, i) => `
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-            <input class="edit-subplace-name" data-i="${i}" value="${n}" style="flex:1;" />
-            <button type="button" class="icon-btn edit-subplace-remove" data-i="${i}">✕</button>
-          </div>`).join('') : '<p style="color:var(--ink-500); font-size:12.5px;">No sub places — add one below.</p>';
-        rowsBox.querySelectorAll('.edit-subplace-name').forEach(inp => {
-          inp.addEventListener('input', (e) => { names[parseInt(e.target.dataset.i, 10)] = e.target.value; });
-        });
-        rowsBox.querySelectorAll('.edit-subplace-remove').forEach(btn => {
-          btn.addEventListener('click', () => { names.splice(parseInt(btn.dataset.i, 10), 1); renderRows(); });
-        });
-      };
-      renderRows();
-
-      document.getElementById('editAddSubPlaceBtn').addEventListener('click', () => {
-        const input = document.getElementById('editNewSubPlaceInput');
-        const val = input.value.trim();
-        if (val) { names.push(val); input.value = ''; renderRows(); }
-      });
-      document.getElementById('editNewSubPlaceInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('editAddSubPlaceBtn').click(); }
-      });
       document.getElementById('editCancelBtn').addEventListener('click', closeModal);
       document.getElementById('editSaveBtn').addEventListener('click', async () => {
         const errBox = document.getElementById('editPlaceError');
-        const mainPlace = document.getElementById('editMainPlaceInput').value.trim();
-        const cleanNames = names.map(n => n.trim()).filter(Boolean);
-        if (!mainPlace || cleanNames.length === 0) { errBox.textContent = 'Main place and at least one sub place are required.'; return; }
+        const name = document.getElementById('editPlaceNameInput').value.trim();
+        if (!name) { errBox.textContent = 'Duty place is required.'; return; }
         const btn = document.getElementById('editSaveBtn');
         btn.disabled = true;
         try {
-          await updateDutyPlaceViaApi(id, { mainPlace, subPlaces: cleanNames });
+          await updateDutyPlaceViaApi(id, { name });
           closeModal();
           loadExistingPlaces();
         } catch (err) {
@@ -2441,18 +2230,7 @@ function attachHandlers(section) {
       btn.textContent = 'Preparing...';
       try {
         const res = await fetchDutyPlacesViaApi({ search: state.search, page: 1, limit: 10000 });
-        const rows = [];
-        res.data.forEach(p => {
-          if (!p.subPlaces.length) {
-            rows.push({ 'Main Place': p.mainPlace, 'Sub Place': '', 'Added On': formatDateTime(p.createdAt) });
-          } else {
-            p.subPlaces.forEach(s => rows.push({
-              'Main Place': p.mainPlace,
-              'Sub Place': s.name,
-              'Added On': formatDateTime(p.createdAt),
-            }));
-          }
-        });
+        const rows = res.data.map(p => ({ 'Duty Place': p.name, 'Added On': formatDateTime(p.createdAt) }));
         exportRowsToExcel(rows, { filename: `duty_places_${Date.now()}.xlsx`, sheetName: 'Duty Places' });
       } catch (err) {
         alert('Could not export: ' + err.message);
@@ -2462,10 +2240,10 @@ function attachHandlers(section) {
       }
     });
 
-    // ---------- Tab 4: Generate QR Code ----------
+    // ---------- Tab 3: Generate QR Code ----------
     let qrPlaceOptions = [];
     let currentQrDataUrl = null;
-    let currentQrCaption = { subPlace: '' };
+    let currentQrCaption = { place: '' };
 
     function resetQrPreview() {
       document.getElementById('qrPreviewCard').style.display = 'none';
@@ -2474,59 +2252,32 @@ function attachHandlers(section) {
       currentQrDataUrl = null;
     }
 
-    async function loadQrMainPlaceOptions() {
-      const select = document.getElementById('qrMainPlaceSelect');
+    async function loadQrPlaceOptions() {
+      const select = document.getElementById('qrPlaceSelect');
       const previous = select.value;
       select.innerHTML = '<option value="">Loading...</option>';
       try {
         const res = await fetchDutyPlaceOptionsViaApi();
         qrPlaceOptions = res.data;
-        select.innerHTML = '<option value="">Select a main place</option>' +
-          qrPlaceOptions.map(p => `<option value="${p._id}">${escapeHtml(p.mainPlace)}</option>`).join('');
+        select.innerHTML = '<option value="">Select a duty place</option>' +
+          qrPlaceOptions.map(p => `<option value="${p._id}">${escapeHtml(p.name)}</option>`).join('');
         if (previous && qrPlaceOptions.some(p => p._id === previous)) {
           select.value = previous;
-          select.dispatchEvent(new Event('change'));
         } else {
-          document.getElementById('qrSubPlaceSelect').innerHTML = '<option value="">Select a main place first</option>';
-          document.getElementById('qrSubPlaceSelect').disabled = true;
           resetQrPreview();
         }
       } catch (err) {
-        select.innerHTML = '<option value="">Could not load places</option>';
+        select.innerHTML = '<option value="">Could not load duty places</option>';
       }
     }
 
-    document.getElementById('qrMainPlaceSelect').addEventListener('change', (e) => {
-      document.getElementById('qrGenerateError').textContent = '';
-      resetQrPreview();
-      const subSelect = document.getElementById('qrSubPlaceSelect');
-      const place = qrPlaceOptions.find(p => p._id === e.target.value);
-
-      if (!place) {
-        subSelect.innerHTML = '<option value="">Select a main place first</option>';
-        subSelect.disabled = true;
-        return;
-      }
-      if (!place.subPlaces.length) {
-        subSelect.innerHTML = '<option value="">No sub places for this main place</option>';
-        subSelect.disabled = true;
-        return;
-      }
-      subSelect.innerHTML = '<option value="">Select a sub place</option>' +
-        place.subPlaces.map((s, i) => `<option value="${i}">${escapeHtml(s.name)}</option>`).join('');
-      subSelect.disabled = false;
-    });
-
-    document.getElementById('qrSubPlaceSelect').addEventListener('change', async (e) => {
+    document.getElementById('qrPlaceSelect').addEventListener('change', async (e) => {
       const errBox = document.getElementById('qrGenerateError');
       errBox.textContent = '';
       resetQrPreview();
 
-      const place = qrPlaceOptions.find(p => p._id === document.getElementById('qrMainPlaceSelect').value);
-      const idx = e.target.value;
-      if (!place || idx === '') return;
-      const subPlace = place.subPlaces[parseInt(idx, 10)];
-      if (!subPlace) return;
+      const place = qrPlaceOptions.find(p => p._id === e.target.value);
+      if (!place) return;
 
       const previewCard = document.getElementById('qrPreviewCard');
       const previewWrap = document.getElementById('qrPreviewWrap');
@@ -2535,17 +2286,17 @@ function attachHandlers(section) {
 
       try {
         const logoImg = await loadImageAsync('images/logo.png');
-        // Requirement: the QR only needs the sub place - the raw name exactly
-        // as stored (spaces included), with no main place mixed in.
-        const canvas = generateQrCanvas(subPlace.name, logoImg);
+        // The QR holds the raw duty place name exactly as stored (spaces
+        // included) - the guard's scan is matched against that exact text.
+        const canvas = generateQrCanvas(place.name, logoImg);
         const dataUrl = canvas.toDataURL('image/png');
 
         currentQrDataUrl = dataUrl;
-        currentQrCaption = { subPlace: subPlace.name };
+        currentQrCaption = { place: place.name };
 
         previewWrap.innerHTML = `
           <div class="qr-frame"><img src="${dataUrl}" alt="QR code" style="display:block; width:220px; height:220px;" /></div>
-          <div class="preserve-space" style="font-size:16px; font-weight:700;">${escapeHtml(subPlace.name)}</div>
+          <div class="preserve-space" style="font-size:16px; font-weight:700;">${escapeHtml(place.name)}</div>
         `;
         document.getElementById('downloadQrPdfBtn').disabled = false;
       } catch (err) {
@@ -2556,10 +2307,10 @@ function attachHandlers(section) {
 
     document.getElementById('downloadQrPdfBtn').addEventListener('click', () => {
       if (!currentQrDataUrl) return;
-      const safeName = currentQrCaption.subPlace.trim().replace(/[^\w\-]+/g, '_') || 'qr_code';
+      const safeName = currentQrCaption.place.trim().replace(/[^\w\-]+/g, '_') || 'qr_code';
       exportQrCodeToPdf({
         dataUrl: currentQrDataUrl,
-        caption: currentQrCaption.subPlace,
+        caption: currentQrCaption.place,
         filename: `${safeName}.pdf`,
       });
     });

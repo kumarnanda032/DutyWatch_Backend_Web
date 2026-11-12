@@ -17,7 +17,7 @@ or Atlas) at these schemas when you're ready to wire up the Node.js backend.
 |---|---|---|
 | `users` | Login credentials + role (admin/guard) | `users/` |
 | `securityguards` | Registered guard profiles | `users/` (role=user subset) |
-| `dutyplaces` | Sites and their sub-places (QR points) | `HelperClassAddPlaces` / places node |
+| `dutyplaces` | Duty places (each one has its own QR code) | `HelperClassAddPlaces` / places node |
 | `dutyassignments` | Guard ↔ place ↔ date-range assignment | `Assign_Duty_DateAndPlaces/` |
 | `qrscans` | Attendance scan events | `Date_QRScanAndImages/.../Scan_DateAndTime` |
 | `uploadedimages` | Site-visit photo evidence (Storage URL) | `Firebase Storage` + DB pointer |
@@ -80,26 +80,21 @@ Indexes: `{ empId: 1 }` unique.
 
 ## 3. `dutyplaces`
 
-A site ("main place") with an embedded array of sub-places.
+A single duty place (no main place / sub place hierarchy). The place's QR code
+encodes its exact `name`.
 
 ```json
 {
   "_id": "ObjectId",
-  "mainPlace": "Aditya Towers - Main Gate",
-  "subPlaces": [
-    { "name": "Gate A" },
-    { "name": "Gate B" },
-    { "name": "Reception Lobby" }
-  ],
+  "name": "Gate A",
   "createdAt": "2024-01-01T09:00:00Z"
 }
 ```
-Indexes: `{ mainPlace: 1 }` unique.
+Indexes: `{ name: 1 }` unique.
 
 ## 4. `dutyassignments`
 
-Guard assigned to a place for a given duty date-range (mirrors
-`Assign_Duty_DateAndPlaces/{dateRange}/{guardLabel}/{mainPlace}/{subPlace}`).
+Guard assigned to one or more duty places for a given duty date-range.
 
 ```json
 {
@@ -109,9 +104,7 @@ Guard assigned to a place for a given duty date-range (mirrors
   "shiftEnd": "2024-01-11T06:00:00Z",
   "guardEmpId": "2758",
   "guardName": "Ramesh Yadav",
-  "dutyPlaceId": "ObjectId (ref: dutyplaces)",
-  "mainPlace": "Aditya Towers - Main Gate",
-  "subPlaces": ["Gate A", "Gate B", "Reception Lobby"],
+  "dutyPlaces": ["Gate A", "Gate B", "Reception Lobby"],
   "assignedBy": "admin",
   "createdAt": "2024-01-08T12:00:00Z"
 }
@@ -129,7 +122,7 @@ Individual attendance scan events (mirrors `Scan_DateAndTime`).
   "dateRange": "10-01-2024_11-01-2024",
   "guardEmpId": "2758",
   "guardName": "Ramesh Yadav",
-  "scannedSubPlace": "Gate A",
+  "scannedDutyPlace": "Gate A",
   "qrCode": "GATEA-AT-001",
   "scannedAt": "2024-01-10T18:42:11Z",
   "verifiedByAdmin": true
@@ -167,9 +160,8 @@ copy speeds up the admin "Duty Finished Status" screen and PDF export).
   "dateRange": "10-01-2024_11-01-2024",
   "guardEmpId": "2758",
   "guardName": "Ramesh Yadav",
-  "mainPlace": "Aditya Towers - Main Gate",
-  "totalSubPlaces": 3,
-  "scannedSubPlaces": 2,
+  "totalDutyPlaces": 3,
+  "scannedDutyPlaces": 2,
   "isComplete": false,
   "lastUpdated": "2024-01-10T21:05:37Z"
 }
@@ -196,10 +188,10 @@ Indexes: `{ empId: 1 }` unique.
 
 - **Login**: `db.users.findOne({ username })`, then `bcrypt.compare()`.
 - **Validate a QR scan** (was a linear array search in `ScanqrcodeadminFragment.java`):
-  `db.dutyassignments.findOne({ guardEmpId, dateRange, subPlaces: scannedValue })`
+  `db.dutyassignments.findOne({ guardEmpId, dateRange, dutyPlaces: scannedValue })`
   — an indexed query instead of pulling the whole node and looping in Java.
 - **Duty finished status per guard**: aggregate `qrscans` grouped by
-  `(guardEmpId, dateRange)` and compare the count against `dutyassignments.subPlaces.length`,
+  `(guardEmpId, dateRange)` and compare the count against `dutyassignments.dutyPlaces.length`,
   or just read the denormalized `dutystatus` collection.
 - **Night-shift date bucketing** (6 PM–6 AM logic from `ScanqrcodeadminFragment.java`)
   is unchanged — it stays application logic in the Node.js API layer, translating

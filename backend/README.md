@@ -59,7 +59,7 @@ Both must be present, numeric, and in range (lat -90..90, lng -180..180);
 otherwise they are silently dropped and the scan is still saved without a
 location - attendance is never blocked by missing GPS.
 
-`GET /api/qr-scans/coverage` returns, for each sub place, the existing `scans`
+`GET /api/qr-scans/coverage` returns, for each duty place, the existing `scans`
 (timestamps) plus a parallel `scanDetails` list - `{ scannedAt, latitude,
 longitude }` per scan, oldest first, with `latitude`/`longitude` null for a scan
 saved without a GPS fix. The Logs / Data screen shows these under each scan time.
@@ -96,3 +96,44 @@ SMS settings go in `.env` (see `.env.example`): `SMS_USERNAME`, `SMS_PASSWORD`,
 credentials set, `/send-otp` answers `503`. For local testing set
 `SMS_DRY_RUN=true` - no SMS is sent and the OTP is printed in the server log.
 Needs Node 18+ (uses the built-in `fetch`).
+
+
+## Duty places (no main / sub places)
+
+There is a single level: a **duty place** is `{ _id, name, createdAt, updatedAt }`
+and each one has its own QR code (the QR text is the exact `name`).
+
+| Endpoint | Body / response |
+|----------|-----------------|
+| `GET /api/duty-places?search=&page=&limit=` | `{ data:[{_id,name,...}], total, page, limit, totalPages }` |
+| `GET /api/duty-places/options` | `{ data:[{_id,name,createdAt}] }` sorted by name (pickers, QR dropdown) |
+| `GET /api/duty-places/stats` | `{ totalDutyPlaces }` |
+| `POST /api/duty-places` (admin) | `{ name }` -> `201` the new place, `409` if the name exists |
+| `PUT /api/duty-places/:id` (admin) | `{ name }` (rename; old assignments/scans keep the old text) |
+| `DELETE /api/duty-places/:id` (admin) | `{ deleted:true, name }` |
+
+Removed: `POST /api/duty-places/:id/sub-places`, and the `mainPlace` / `subPlaces` fields.
+
+**Duty assignments** now hold a list of place names:
+`POST /api/duty-assignments/bulk` `{ dutyDate, assignments:[{ guardEmpId, guardName, dutyPlaces:[name,...] }] }`;
+`PUT /api/duty-assignments/:id` `{ guardEmpId, guardName, dutyPlaces:[...], dutyDate }`.
+Stored/returned as `dutyPlaces: [String]`; `GET /api/duty-assignments/stats` -> `{ totalAssignments, totalDutyPlaces }`.
+
+**QR scans:** `POST /api/qr-scans` `{ guardEmpId, scannedDutyPlace, latitude?, longitude? }`
+(was `scannedSubPlace`); scan records carry `scannedDutyPlace` and no `mainPlace`.
+`GET /api/qr-scans/coverage` returns `dutyPlaces:[{ name, scanned, scans, scanDetails }]`
+per duty (was `subPlaces`) and no `mainPlace`.
+
+### Migrating existing data
+
+Existing MongoDB documents use the old shape. Back up first (`mongodump`), then:
+
+```bash
+node scripts/migrate-flatten-places.js          # dry run - prints counts only
+node scripts/migrate-flatten-places.js --apply  # converts dutyplaces, dutyassignments, qrscans
+```
+
+Each old sub place becomes its own duty place (names kept exactly, so printed QR codes
+still match); old main-place names are dropped. Safe to re-run.
+
+On start-up the server removes any leftover unique `mainPlace_1` index from the old main/sub-place design, so no manual database step is needed.

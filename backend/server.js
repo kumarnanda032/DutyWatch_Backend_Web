@@ -4,7 +4,7 @@
  * Standalone Express + MongoDB backend. It no longer serves the web
  * dashboard - the web front end runs as its own project on its own port.
  * Connects to MongoDB for authentication, user (admin/guard) management,
- * duty places (main places + sub-places), duty assignments, QR scans, and
+ * duty places, duty assignments, QR scans, and
  * uploaded site-visit images / profile photos.
  *
  * Uploaded files (routes/uploadedImages.js, routes/users.js) are stored on
@@ -43,6 +43,7 @@ const qrScanRoutes = require('./routes/qrScans');
 const uploadedImageRoutes = require('./routes/uploadedImages');
 const scanSettingRoutes = require('./routes/scanSettings');
 const contactUsRoutes = require('./routes/contactUs');
+const DutyPlace = require('./models/DutyPlace');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -113,7 +114,30 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Unexpected server error.' });
 });
 
-connectDB().then(() => {
+// Duty places used to be "main place" + "sub places", with a unique index on
+// mainPlace. That concept is gone, but the index can still exist in an older
+// database and blocks every new duty place after the first. Drop any leftover
+// index on mainPlace (harmless if there is none), then make sure the current
+// indexes (unique name) exist.
+async function removeLegacyDutyPlaceIndexes() {
+  try {
+    const indexes = await DutyPlace.collection.indexes();
+    for (const idx of indexes) {
+      if (idx.key && Object.prototype.hasOwnProperty.call(idx.key, 'mainPlace')) {
+        await DutyPlace.collection.dropIndex(idx.name);
+        console.log(`Removed old duty place index "${idx.name}".`);
+      }
+    }
+    await DutyPlace.createIndexes();
+  } catch (err) {
+    // Collection doesn't exist yet (fresh database) or no permission - not fatal.
+    if (err && err.codeName !== 'NamespaceNotFound') {
+      console.warn('Could not check duty place indexes:', err.message);
+    }
+  }
+}
+
+connectDB().then(removeLegacyDutyPlaceIndexes).then(() => {
   app.listen(PORT, () => {
     console.log(`Aditya Security Guard backend API running at http://localhost:${PORT}`);
   });

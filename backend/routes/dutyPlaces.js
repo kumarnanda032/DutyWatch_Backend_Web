@@ -9,33 +9,37 @@ function escapeRegex(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// De-dupes and trims a list of sub-place names, dropping blanks. Only
-// leading/trailing whitespace is touched - the name itself (spaces,
-// casing) is kept exactly as the user typed it.
-function normalizeNames(list) {
-  const seen = new Set();
-  const out = [];
-  (Array.isArray(list) ? list : []).forEach((n) => {
-    const name = String(n || '').trim();
-    const key = name.toLowerCase();
-    if (name && !seen.has(key)) {
-      seen.add(key);
-      out.push(name);
-    }
-  });
-  return out;
+// Only leading/trailing whitespace is touched - the name itself (spaces,
+// casing) is kept exactly as the user typed it, because the place's QR code
+// encodes this exact text.
+function cleanName(value) {
+  return String(value || '').trim();
+}
+
+function sameNameRegex(name) {
+  return new RegExp(`^${escapeRegex(name)}$`, 'i');
+}
+
+// A duplicate-key error only means "name already exists" when the clash is on
+// `name`. Any other index clash is a database problem, not a duplicate name.
+function legacyIndexOr409(err, res, message) {
+  const keys = Object.keys(err.keyPattern || {});
+  if (keys.length && !keys.includes('name')) {
+    console.error('Duty place save blocked by an unexpected index on:', keys.join(', '));
+    return res.status(500).json({ error: 'Could not save the duty place. Restart the server and try again.' });
+  }
+  return res.status(409).json({ error: message });
 }
 
 // GET /api/duty-places?search=&page=1&limit=10
-//   search - optional, matches mainPlace or any sub-place name (case-insensitive, partial)
+//   search - optional, matches the duty place name (case-insensitive, partial)
 // Returns { data, total, page, limit, totalPages }
 router.get('/', async (req, res) => {
   try {
     const filter = {};
     const search = (req.query.search || '').trim();
     if (search) {
-      const re = new RegExp(escapeRegex(search), 'i');
-      filter.$or = [{ mainPlace: re }, { 'subPlaces.name': re }];
+      filter.name = new RegExp(escapeRegex(search), 'i');
     }
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
@@ -61,22 +65,14 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/duty-places/stats
-// Two counts for the admin Home dashboard's "Main locations" and "Sub
-// places" cards, both read straight from the DutyPlace collection (the
-// master list of sites), not from DutyAssignment - so the numbers reflect
-// every sub-place that exists, whether or not a guard is currently assigned
-// to it.
+// Count for the admin Home dashboard's "Duty places" card, read straight from
+// the DutyPlace collection (the master list of places), not from
+// DutyAssignment - so it reflects every place that exists, whether or not a
+// guard is currently assigned to it.
 router.get('/stats', async (req, res) => {
   try {
-    const [totalMainPlaces, subPlaceAgg] = await Promise.all([
-      DutyPlace.countDocuments({}),
-      DutyPlace.aggregate([
-        { $project: { subPlaceCount: { $size: { $ifNull: ['$subPlaces', []] } } } },
-        { $group: { _id: null, total: { $sum: '$subPlaceCount' } } },
-      ]),
-    ]);
-    const totalSubPlaces = subPlaceAgg.length ? subPlaceAgg[0].total : 0;
-    res.json({ totalMainPlaces, totalSubPlaces });
+    const totalDutyPlaces = await DutyPlace.countDocuments({});
+    res.json({ totalDutyPlaces });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error fetching duty place stats.' });
@@ -85,10 +81,10 @@ router.get('/stats', async (req, res) => {
 
 // GET /api/duty-places/options
 // Lightweight, unpaginated list (sorted alphabetically) used to populate the
-// "Add Sub Places" main-place dropdown and similar pickers.
+// Assign Duty place picker and the Generate QR Code dropdown.
 router.get('/options', async (req, res) => {
   try {
-    const data = await DutyPlace.find({}).sort({ mainPlace: 1 }).select('mainPlace subPlaces createdAt');
+    const data = await DutyPlace.find({}).sort({ name: 1 }).select('name createdAt');
     res.json({ data });
   } catch (err) {
     console.error(err);
@@ -96,78 +92,83 @@ router.get('/options', async (req, res) => {
   }
 });
 
-// POST /api/duty-places  { mainPlace, subPlaces: [name, ...] }
-// Creates a new main place with one or more sub-places.
+// POST /api/duty-places  { name }  or  { names: [name, ...] }
+// Creates one duty place, or several at once. With `names`, each is handled
+// independently: new ones are saved, blanks / repeats / names that already
+// exist are skipped and reported. Response (names form):
+//   201 { added: [doc, ...], skipped: [{ name, reason }, ...] }   (400 if nothing was added)
 router.post('/', requireRole('admin'), async (req, res) => {
   try {
-    const mainPlace = String(req.body.mainPlace || '').trim();
-    const names = normalizeNames(req.body.subPlaces);
+    if (Array.isArray(req.body.names)) {
+      const added = [];
+      const skipped = [];
+      const seen = new Set();
 
-    if (!mainPlace) {
-      return res.status(400).json({ error: 'Main place is required.' });
-    }
-    if (names.length === 0) {
-      return res.status(400).json({ error: 'At least one sub place is required.' });
+      for (const raw of req.body.names) {
+        const name = cleanName(raw);
+        if (!name) continue;
+        const key = name.toLowerCase();
+        if (seen.has(key)) {
+          skipped.push({ name, reason: 'Listed more than once.' });
+          continue;
+        }
+        seen.add(key);
+
+        if (await DutyPlace.findOne({ name: sameNameRegex(name) })) {
+          skipped.push({ name, reason: 'Already exists.' });
+          continue;
+        }
+        try {
+          added.push(await DutyPlace.create({ name }));
+        } catch (rowErr) {
+          if (rowErr.code === 11000) {
+            const keys = Object.keys(rowErr.keyPattern || {});
+            if (keys.length && !keys.includes('name')) throw rowErr; // leftover index - handled below
+            skipped.push({ name, reason: 'Already exists.' });
+          } else {
+            skipped.push({ name, reason: rowErr.message || 'Could not save.' });
+          }
+        }
+      }
+
+      if (added.length === 0 && skipped.length === 0) {
+        return res.status(400).json({ error: 'Duty place name is required.' });
+      }
+      if (added.length === 0) {
+        return res.status(409).json({ error: 'Nothing was added - those duty places already exist.', added, skipped });
+      }
+      return res.status(201).json({ added, skipped });
     }
 
-    const existing = await DutyPlace.findOne({ mainPlace: new RegExp(`^${escapeRegex(mainPlace)}$`, 'i') });
+    const name = cleanName(req.body.name);
+    if (!name) {
+      return res.status(400).json({ error: 'Duty place name is required.' });
+    }
+
+    const existing = await DutyPlace.findOne({ name: sameNameRegex(name) });
     if (existing) {
-      return res.status(409).json({ error: 'That main place already exists.' });
+      return res.status(409).json({ error: 'That duty place already exists.' });
     }
 
-    const subPlaces = names.map((name) => ({ name }));
-    const doc = await DutyPlace.create({ mainPlace, subPlaces });
+    const doc = await DutyPlace.create({ name });
     res.status(201).json(doc);
   } catch (err) {
     console.error(err);
     if (err.code === 11000) {
-      return res.status(409).json({ error: 'That main place already exists.' });
+      return legacyIndexOr409(err, res, 'That duty place already exists.');
     }
     res.status(500).json({ error: 'Server error creating duty place.' });
   }
 });
 
-// POST /api/duty-places/:id/sub-places  { subPlaces: [name, ...] }
-// Adds one or more new sub-places to an existing main place.
-router.post('/:id/sub-places', requireRole('admin'), async (req, res) => {
-  try {
-    const names = normalizeNames(req.body.subPlaces);
-    if (names.length === 0) {
-      return res.status(400).json({ error: 'At least one sub place is required.' });
-    }
-
-    const doc = await DutyPlace.findById(req.params.id);
-    if (!doc) {
-      return res.status(404).json({ error: 'Duty place not found.' });
-    }
-
-    const existingLower = new Set(doc.subPlaces.map((s) => s.name.toLowerCase()));
-    const toAdd = names.filter((n) => !existingLower.has(n.toLowerCase()));
-    if (toAdd.length === 0) {
-      return res.status(409).json({ error: 'All of those sub places already exist for this location.' });
-    }
-
-    toAdd.forEach((name) => doc.subPlaces.push({ name }));
-    await doc.save();
-    res.status(201).json(doc);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error adding sub places.' });
-  }
-});
-
-// PUT /api/duty-places/:id  { mainPlace, subPlaces: [name, ...] }
-// Edits the main place name and/or its full list of sub-place names.
+// PUT /api/duty-places/:id  { name }
+// Renames a duty place. Note: existing assignments and scans keep the name
+// they were saved with, and a printed QR code still carries the old text.
 router.put('/:id', requireRole('admin'), async (req, res) => {
   try {
-    const mainPlace = String(req.body.mainPlace || '').trim();
-    const names = normalizeNames(req.body.subPlaces);
-
-    if (!mainPlace) {
-      return res.status(400).json({ error: 'Main place is required.' });
-    }
-    if (names.length === 0) {
-      return res.status(400).json({ error: 'At least one sub place is required.' });
+    const name = cleanName(req.body.name);
+    if (!name) {
+      return res.status(400).json({ error: 'Duty place name is required.' });
     }
 
     const doc = await DutyPlace.findById(req.params.id);
@@ -175,37 +176,31 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
       return res.status(404).json({ error: 'Duty place not found.' });
     }
 
-    const dupe = await DutyPlace.findOne({
-      _id: { $ne: doc._id },
-      mainPlace: new RegExp(`^${escapeRegex(mainPlace)}$`, 'i'),
-    });
+    const dupe = await DutyPlace.findOne({ _id: { $ne: doc._id }, name: sameNameRegex(name) });
     if (dupe) {
-      return res.status(409).json({ error: 'Another duty place already uses that main place name.' });
+      return res.status(409).json({ error: 'Another duty place already uses that name.' });
     }
 
-    doc.mainPlace = mainPlace;
-    doc.subPlaces = names.map((name) => ({ name }));
-
+    doc.name = name;
     await doc.save();
     res.json(doc);
   } catch (err) {
     console.error(err);
     if (err.code === 11000) {
-      return res.status(409).json({ error: 'Another duty place already uses that main place name.' });
+      return legacyIndexOr409(err, res, 'Another duty place already uses that name.');
     }
     res.status(500).json({ error: 'Server error updating duty place.' });
   }
 });
 
 // DELETE /api/duty-places/:id
-// Removes the main place and all of its sub-places.
 router.delete('/:id', requireRole('admin'), async (req, res) => {
   try {
     const doc = await DutyPlace.findByIdAndDelete(req.params.id);
     if (!doc) {
       return res.status(404).json({ error: 'Duty place not found.' });
     }
-    res.json({ deleted: true, mainPlace: doc.mainPlace });
+    res.json({ deleted: true, name: doc.name });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error deleting duty place.' });

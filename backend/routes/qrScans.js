@@ -85,7 +85,7 @@ function dayBoundsUTC(dateStr) {
 }
 
 // GET /api/qr-scans?search=&date=&page=1&limit=10
-//   search - optional, matches guard name/employee ID, main place, or sub place
+//   search - optional, matches guard name/employee ID or duty place
 //   date   - optional, "YYYY-MM-DD"; restricts to scans made on that
 //            calendar day - used by the admin Home page's "QR scans today"
 //            stat (?date=<today>&limit=1, reading just `total`).
@@ -97,7 +97,7 @@ router.get('/', requireRole('admin'), async (req, res) => {
     const search = (req.query.search || '').trim();
     if (search) {
       const re = new RegExp(escapeRegex(search), 'i');
-      filter.$or = [{ guardName: re }, { guardEmpId: re }, { mainPlace: re }, { scannedSubPlace: re }];
+      filter.$or = [{ guardName: re }, { guardEmpId: re }, { scannedDutyPlace: re }];
     }
 
     const dateStr = (req.query.date || '').trim();
@@ -181,9 +181,9 @@ router.get('/mine', ownGuardOrAdmin, async (req, res) => {
 //                 When omitted, every duty assigned that day (the admin
 //                 screen), one entry per guard.
 //
-// For each matching DutyAssignment, returns its sub places each tagged with
+// For each matching DutyAssignment, returns its duty places each tagged with
 // whether a QrScan exists for it on that duty - this is what lets a screen
-// highlight a sub place nobody scanned. Every scan of that sub place is
+// highlight a duty place nobody scanned. Every scan of that duty place is
 // included (oldest first), not just the most recent one, so a screen can
 // show the full visit history with serial numbers.
 router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
@@ -207,7 +207,7 @@ router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'date is required (YYYY-MM-DD).' });
     }
 
-    const assignments = await DutyAssignment.find(filter).sort({ dutyDate: -1, mainPlace: 1 }).lean();
+    const assignments = await DutyAssignment.find(filter).sort({ dutyDate: -1, guardName: 1 }).lean();
     if (assignments.length === 0) {
       return res.json({ data: [], total: 0 });
     }
@@ -218,36 +218,35 @@ router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
       .sort({ scannedAt: 1 })
       .lean();
 
-    // assignmentId -> (subPlace name -> every scan of it, oldest first)
+    // assignmentId -> (duty place name -> every scan of it, oldest first)
     const byAssignment = new Map();
     for (const scan of scans) {
       const key = String(scan.assignmentId);
       if (!byAssignment.has(key)) byAssignment.set(key, new Map());
-      const bySubPlace = byAssignment.get(key);
-      if (!bySubPlace.has(scan.scannedSubPlace)) bySubPlace.set(scan.scannedSubPlace, []);
-      bySubPlace.get(scan.scannedSubPlace).push(scan);
+      const byPlace = byAssignment.get(key);
+      if (!byPlace.has(scan.scannedDutyPlace)) byPlace.set(scan.scannedDutyPlace, []);
+      byPlace.get(scan.scannedDutyPlace).push(scan);
     }
 
     const data = assignments.map((a) => {
-      const bySubPlace = byAssignment.get(String(a._id)) || new Map();
+      const byPlace = byAssignment.get(String(a._id)) || new Map();
       return {
         guardEmpId: a.guardEmpId,
         guardName: a.guardName,
-        mainPlace: a.mainPlace,
         dateRange: a.dateRange,
         dutyDate: a.dutyDate,
         status: dutyStatus(a.dutyDate),
-        subPlaces: a.subPlaces.map((name) => {
-          const subScans = bySubPlace.get(name) || [];
+        dutyPlaces: a.dutyPlaces.map((name) => {
+          const placeScans = byPlace.get(name) || [];
           return {
             name,
-            scanned: subScans.length > 0,
+            scanned: placeScans.length > 0,
             // Just the timestamps (what older clients already read)...
-            scans: subScans.map((x) => x.scannedAt),
+            scans: placeScans.map((x) => x.scannedAt),
             // ...and the same scans, in the same order, with where the phone
             // was at the time. latitude/longitude are null for a scan saved
             // without a GPS fix.
-            scanDetails: subScans.map((x) => ({
+            scanDetails: placeScans.map((x) => ({
               scannedAt: x.scannedAt,
               latitude: x.latitude ?? null,
               longitude: x.longitude ?? null,
@@ -264,23 +263,23 @@ router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
   }
 });
 
-// POST /api/qr-scans  { guardEmpId, scannedSubPlace }
+// POST /api/qr-scans  { guardEmpId, scannedDutyPlace, latitude?, longitude? }
 // The mobile app's Scan QR Code screen calls this once someone taps Submit
 // on a scanned code. Nothing is trusted from the client beyond *who* is
-// scanning and *what text* their camera read - guardName, mainPlace and
-// dateRange are all pulled from that person's own DutyAssignment for today,
-// and the scan is rejected outright unless the scanned text exactly matches
-// one of that assignment's sub places. This is the "only store it if that
-// sub place is actually assigned to this user today" rule.
+// scanning and *what text* their camera read - guardName and dateRange are
+// pulled from that person's own DutyAssignment for today, and the scan is
+// rejected outright unless the scanned text exactly matches one of that
+// assignment's duty places. This is the "only store it if that duty place is
+// actually assigned to this user today" rule.
 router.post('/', ownGuardOrAdmin, async (req, res) => {
   try {
     const guardEmpId = String(req.body.guardEmpId || '').trim();
-    const scannedSubPlace = String(req.body.scannedSubPlace || '').trim();
+    const scannedDutyPlace = String(req.body.scannedDutyPlace || '').trim();
 
     if (!guardEmpId) {
       return res.status(400).json({ error: 'guardEmpId is required.' });
     }
-    if (!scannedSubPlace) {
+    if (!scannedDutyPlace) {
       return res.status(400).json({ error: 'No QR data to submit.' });
     }
 
@@ -316,10 +315,10 @@ router.post('/', ownGuardOrAdmin, async (req, res) => {
       return res.status(404).json({ error: 'You have no duty assigned for today.' });
     }
 
-    const isAssigned = assignment.subPlaces.some((s) => s === scannedSubPlace);
+    const isAssigned = assignment.dutyPlaces.some((p) => p === scannedDutyPlace);
     if (!isAssigned) {
       return res.status(400).json({
-        error: `"${scannedSubPlace}" is not part of your assigned duty today (${assignment.mainPlace}).`,
+        error: `"${scannedDutyPlace}" is not one of your assigned duty places today.`,
       });
     }
 
@@ -327,8 +326,7 @@ router.post('/', ownGuardOrAdmin, async (req, res) => {
       assignmentId: assignment._id,
       guardEmpId: assignment.guardEmpId,
       guardName: assignment.guardName,
-      mainPlace: assignment.mainPlace,
-      scannedSubPlace,
+      scannedDutyPlace,
       dateRange: assignment.dateRange,
       scannedAt: new Date(),
       // Only set when the phone sent a valid fix (see above).

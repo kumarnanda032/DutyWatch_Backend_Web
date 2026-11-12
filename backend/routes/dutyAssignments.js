@@ -9,6 +9,22 @@ function escapeRegex(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Trims a list of duty place names, drops blanks and case-insensitive
+// duplicates (keeps the first spelling). Names are otherwise untouched.
+function cleanPlaceList(list) {
+  const seen = new Set();
+  const out = [];
+  (Array.isArray(list) ? list : []).forEach((n) => {
+    const name = String(n == null ? '' : n).trim();
+    const key = name.toLowerCase();
+    if (name && !seen.has(key)) {
+      seen.add(key);
+      out.push(name);
+    }
+  });
+  return out;
+}
+
 function toDDMMYYYY(d) {
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -53,24 +69,24 @@ function dutyStatus(dutyDate) {
 }
 
 // GET /api/duty-assignments?search=&date=&page=1&limit=10
-//   search - optional, matches guard name, main place, or any sub-place
+//   search - optional, matches guard name, employee ID, or any duty place name
 // GET /api/duty-assignments/stats
 // Two counts for the admin Home dashboard's "Active assignments" card:
-// how many duty assignments exist in total, and how many sub places those
-// assignments cover between them (each assignment's subPlaces.length,
-// summed) - e.g. 12 assignments might cover 37 sub places between them.
+// how many duty assignments exist in total, and how many duty places those
+// assignments cover between them (each assignment's dutyPlaces.length,
+// summed) - e.g. 12 assignments might cover 37 duty places between them.
 // Not date-scoped, matching the existing "Active assignments" total.
 router.get('/stats', requireRole('admin'), async (req, res) => {
   try {
-    const [totalAssignments, subPlaceAgg] = await Promise.all([
+    const [totalAssignments, dutyPlaceAgg] = await Promise.all([
       DutyAssignment.countDocuments({}),
       DutyAssignment.aggregate([
-        { $project: { subPlaceCount: { $size: { $ifNull: ['$subPlaces', []] } } } },
-        { $group: { _id: null, total: { $sum: '$subPlaceCount' } } },
+        { $project: { dutyPlaceCount: { $size: { $ifNull: ['$dutyPlaces', []] } } } },
+        { $group: { _id: null, total: { $sum: '$dutyPlaceCount' } } },
       ]),
     ]);
-    const totalSubPlaces = subPlaceAgg.length ? subPlaceAgg[0].total : 0;
-    res.json({ totalAssignments, totalSubPlaces });
+    const totalDutyPlaces = dutyPlaceAgg.length ? dutyPlaceAgg[0].total : 0;
+    res.json({ totalAssignments, totalDutyPlaces });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error fetching assignment stats.' });
@@ -87,7 +103,7 @@ router.get('/', requireRole('admin'), async (req, res) => {
     const search = (req.query.search || '').trim();
     if (search) {
       const re = new RegExp(escapeRegex(search), 'i');
-      filter.$or = [{ guardName: re }, { guardEmpId: re }, { mainPlace: re }, { subPlaces: re }];
+      filter.$or = [{ guardName: re }, { guardEmpId: re }, { dutyPlaces: re }];
     }
 
     const dateStr = (req.query.date || '').trim();
@@ -154,7 +170,7 @@ router.get('/mine', ownGuardOrAdmin, async (req, res) => {
 });
 
 // POST /api/duty-assignments/bulk
-//   { dutyDate, assignments: [ { guardEmpId, guardName, dutyPlaceId, mainPlace, subPlaces }, ... ] }
+//   { dutyDate, assignments: [ { guardEmpId, guardName, dutyPlaces: [name, ...] }, ... ] }
 // Used by the drag-and-drop "Assign Duty to Guard" screen to submit every
 // duty card built in one batch. Each row is validated and inserted
 // independently (same pattern as /api/users/bulk) - one bad or duplicate
@@ -186,11 +202,10 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
       const row = items[i] || {};
       const guardEmpId = String(row.guardEmpId || '').trim();
       const guardName = String(row.guardName || '').trim();
-      const mainPlace = String(row.mainPlace || '').trim();
-      const subPlaces = Array.isArray(row.subPlaces) ? row.subPlaces.map((s) => String(s).trim()).filter(Boolean) : [];
+      const dutyPlaces = cleanPlaceList(row.dutyPlaces);
 
-      if (!guardEmpId || !guardName || !mainPlace || subPlaces.length === 0) {
-        results.push({ index: i, guardName, status: 'skipped', reason: 'Missing guard, main place, or sub places.' });
+      if (!guardEmpId || !guardName || dutyPlaces.length === 0) {
+        results.push({ index: i, guardName, status: 'skipped', reason: 'Missing guard or duty places.' });
         continue;
       }
       if (seenGuards.has(guardEmpId)) {
@@ -208,9 +223,7 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
         await DutyAssignment.create({
           guardEmpId,
           guardName,
-          dutyPlaceId: row.dutyPlaceId || undefined,
-          mainPlace,
-          subPlaces,
+          dutyPlaces,
           dutyDate: new Date(req.body.dutyDate),
           dateRange,
         });
@@ -243,17 +256,16 @@ function isCompleted(dutyDate) {
   return bounds ? new Date(dutyDate) < bounds.start : false;
 }
 
-// PUT /api/duty-assignments/:id  { guardEmpId, guardName, dutyPlaceId, mainPlace, subPlaces, dutyDate }
+// PUT /api/duty-assignments/:id  { guardEmpId, guardName, dutyPlaces: [name, ...], dutyDate }
 router.put('/:id', requireRole('admin'), async (req, res) => {
   try {
     const guardEmpId = String(req.body.guardEmpId || '').trim();
     const guardName = String(req.body.guardName || '').trim();
-    const mainPlace = String(req.body.mainPlace || '').trim();
-    const subPlaces = Array.isArray(req.body.subPlaces) ? req.body.subPlaces.map((s) => String(s).trim()).filter(Boolean) : [];
+    const dutyPlaces = cleanPlaceList(req.body.dutyPlaces);
     const dateRange = computeDateRange(req.body.dutyDate);
 
-    if (!guardEmpId || !guardName || !mainPlace || subPlaces.length === 0 || !dateRange) {
-      return res.status(400).json({ error: 'Guard, main place, sub places, and a valid duty date are all required.' });
+    if (!guardEmpId || !guardName || dutyPlaces.length === 0 || !dateRange) {
+      return res.status(400).json({ error: 'Guard, duty places, and a valid duty date are all required.' });
     }
 
     const doc = await DutyAssignment.findById(req.params.id);
@@ -277,9 +289,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
 
     doc.guardEmpId = guardEmpId;
     doc.guardName = guardName;
-    if (req.body.dutyPlaceId) doc.dutyPlaceId = req.body.dutyPlaceId;
-    doc.mainPlace = mainPlace;
-    doc.subPlaces = subPlaces;
+    doc.dutyPlaces = dutyPlaces;
     doc.dutyDate = new Date(req.body.dutyDate);
     doc.dateRange = dateRange;
 
@@ -305,7 +315,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
       return res.status(409).json({ error: 'This duty has already been completed and can no longer be deleted.' });
     }
     await doc.deleteOne();
-    res.json({ deleted: true, guardName: doc.guardName, mainPlace: doc.mainPlace });
+    res.json({ deleted: true, guardName: doc.guardName, dutyPlaces: doc.dutyPlaces });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error deleting duty assignment.' });
