@@ -68,6 +68,46 @@ function dutyStatus(dutyDate) {
   return 'upcoming';
 }
 
+
+// A duty place can only be covered by ONE guard on a given duty date. When a
+// place is (re)assigned to a guard, it is first removed from every OTHER
+// guard's assignment on that same date. If that leaves the other guard with no
+// places at all, their (now empty) assignment is deleted. Completed duties
+// (earlier dates) are never touched because only the chosen date is searched.
+// Returns [{ guardEmpId, guardName, places: [removed names], assignmentDeleted }]
+async function releasePlacesFromOtherGuards({ places, dutyDate, keepGuardEmpId, excludeId }) {
+  const bounds = dayBoundsUTC(dutyDate);
+  if (!bounds || !places.length) return [];
+
+  const wanted = new Set(places.map((p) => p.toLowerCase()));
+  const filter = {
+    dutyDate: { $gte: bounds.start, $lt: bounds.end },
+    guardEmpId: { $ne: keepGuardEmpId },
+    dutyPlaces: { $in: places.map((p) => new RegExp(`^${escapeRegex(p)}$`, 'i')) },
+  };
+  if (excludeId) filter._id = { $ne: excludeId };
+
+  const others = await DutyAssignment.find(filter);
+  const moved = [];
+  for (const other of others) {
+    const removed = other.dutyPlaces.filter((n) => wanted.has(String(n).toLowerCase()));
+    const remaining = other.dutyPlaces.filter((n) => !wanted.has(String(n).toLowerCase()));
+    if (remaining.length === 0) {
+      await other.deleteOne();
+    } else {
+      other.dutyPlaces = remaining;
+      await other.save();
+    }
+    moved.push({
+      guardEmpId: other.guardEmpId,
+      guardName: other.guardName,
+      places: removed,
+      assignmentDeleted: remaining.length === 0,
+    });
+  }
+  return moved;
+}
+
 // GET /api/duty-assignments?search=&date=&page=1&limit=10
 //   search - optional, matches guard name, employee ID, or any duty place name
 // GET /api/duty-assignments/stats
@@ -220,6 +260,14 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
           continue;
         }
 
+        // Take these places away from any other guard who already has them
+        // on this date, then assign them to this guard.
+        const movedFrom = await releasePlacesFromOtherGuards({
+          places: dutyPlaces,
+          dutyDate: req.body.dutyDate,
+          keepGuardEmpId: guardEmpId,
+        });
+
         await DutyAssignment.create({
           guardEmpId,
           guardName,
@@ -229,7 +277,7 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
         });
         seenGuards.add(guardEmpId);
         insertedCount += 1;
-        results.push({ index: i, guardName, status: 'inserted' });
+        results.push({ index: i, guardName, status: 'inserted', ...(movedFrom.length ? { movedFrom } : {}) });
       } catch (rowErr) {
         if (rowErr.code === 11000) {
           results.push({ index: i, guardName, status: 'skipped', reason: `${guardName} already has a duty assigned for ${dateRange}.` });
@@ -287,6 +335,15 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
       return res.status(409).json({ error: `${guardName} already has a duty assigned for ${dateRange}.` });
     }
 
+    // Remove these places from any OTHER guard on the chosen date first, so a
+    // place is never assigned to two guards at once.
+    const reassigned = await releasePlacesFromOtherGuards({
+      places: dutyPlaces,
+      dutyDate: req.body.dutyDate,
+      keepGuardEmpId: guardEmpId,
+      excludeId: doc._id,
+    });
+
     doc.guardEmpId = guardEmpId;
     doc.guardName = guardName;
     doc.dutyPlaces = dutyPlaces;
@@ -294,7 +351,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
     doc.dateRange = dateRange;
 
     await doc.save();
-    res.json(doc);
+    res.json({ ...doc.toObject(), reassigned });
   } catch (err) {
     console.error(err);
     if (err.code === 11000) {
