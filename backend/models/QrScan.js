@@ -19,6 +19,7 @@ const QrScanSchema = new Schema(
     guardEmpId: { type: String, required: true, trim: true },
     guardName: { type: String, required: true, trim: true },
     scannedDutyPlace: { type: String, required: true, trim: true },
+    dutyType: { type: String, enum: ['Day Duty', 'Night Duty'] },
     dateRange: { type: String, required: true },
     scannedAt: { type: Date, required: true, default: Date.now },
     // Device GPS coordinates captured on the phone at the moment of

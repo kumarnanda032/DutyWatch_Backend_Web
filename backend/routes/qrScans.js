@@ -22,7 +22,7 @@ function minutesOf(hhmm) {
 // ScanSetting doc rather than querying for it itself, so the POST /
 // handler below can reuse the same doc to build its error message.
 function isWithinScanWindow(setting) {
-  if (!setting) return true;
+  if (!setting || !setting.from || !setting.to) return true;
 
   const nowIst = new Date(Date.now() + IST_OFFSET_MINUTES * 60000);
   const nowMin = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
@@ -45,6 +45,14 @@ function formatHHmm(hhmm) {
 }
 
 const { requireRole, ownGuardOrAdmin, selfOrAdminParam } = require('../middleware/auth');
+
+// Day / Night duty filter. Duties saved before duty types existed have no
+// dutyType and count as Night Duty. Returns null for anything else.
+function dutyTypeFilter(type) {
+  if (type === 'Day Duty') return 'Day Duty';
+  if (type === 'Night Duty') return { $in: ['Night Duty', null] };
+  return null;
+}
 
 const router = express.Router();
 
@@ -105,6 +113,10 @@ router.get('/', requireRole('admin'), async (req, res) => {
       const bounds = dayBoundsUTC(dateStr);
       if (bounds) filter.scannedAt = { $gte: bounds.start, $lt: bounds.end };
     }
+
+    // Optional Day / Night filter (scans saved before duty types count as Night).
+    const typeFilter = dutyTypeFilter(typeof req.query.dutyType === 'string' ? req.query.dutyType.trim() : '');
+    if (typeFilter) filter.dutyType = typeFilter;
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 10000);
@@ -207,6 +219,9 @@ router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
       return res.status(400).json({ error: 'date is required (YYYY-MM-DD).' });
     }
 
+    const typeFilter = dutyTypeFilter(typeof req.query.dutyType === 'string' ? req.query.dutyType.trim() : '');
+    if (typeFilter) filter.dutyType = typeFilter;
+
     const assignments = await DutyAssignment.find(filter).sort({ dutyDate: -1, guardName: 1 }).lean();
     if (assignments.length === 0) {
       return res.json({ data: [], total: 0 });
@@ -233,6 +248,7 @@ router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
       return {
         guardEmpId: a.guardEmpId,
         guardName: a.guardName,
+        dutyType: a.dutyType || 'Night Duty',
         dateRange: a.dateRange,
         dutyDate: a.dutyDate,
         status: dutyStatus(a.dutyDate),
@@ -263,7 +279,26 @@ router.get('/coverage', ownGuardOrAdmin, async (req, res) => {
   }
 });
 
-// POST /api/qr-scans  { guardEmpId, scannedDutyPlace, latitude?, longitude? }
+// The scan window that applies to a duty type: that type's own window or,
+// when it has none, the original general window. null = nothing saved.
+async function windowFor(dutyType) {
+  const own = await ScanSetting.findOne({ dutyType });
+  if (own && own.from && own.to) return own;
+  return ScanSetting.findOne({ dutyType: { $exists: false } });
+}
+
+// [start, end) UTC bounds of the IST calendar day `offsetDays` from today.
+// Duty dates are stored as UTC midnight of the "YYYY-MM-DD" the admin picked,
+// so an IST day maps onto them exactly.
+function istDayBounds(offsetDays) {
+  const ist = new Date(Date.now() + IST_OFFSET_MINUTES * 60000);
+  const start = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate() + offsetDays));
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+}
+
+// POST /api/qr-scans  { guardEmpId, scannedDutyPlace, dutyType?, latitude?, longitude? }
 // The mobile app's Scan QR Code screen calls this once someone taps Submit
 // on a scanned code. Nothing is trusted from the client beyond *who* is
 // scanning and *what text* their camera read - guardName and dateRange are
@@ -275,7 +310,13 @@ router.post('/', ownGuardOrAdmin, async (req, res) => {
   try {
     const guardEmpId = String(req.body.guardEmpId || '').trim();
     const scannedDutyPlace = String(req.body.scannedDutyPlace || '').trim();
+    // Optional: the app/web sends the duty type the guard is on, so a guard
+    // holding both a Day and a Night duty is scanned against the right one.
+    const wantedType = typeof req.body.dutyType === 'string' ? req.body.dutyType.trim() : '';
 
+    if (wantedType && wantedType !== 'Day Duty' && wantedType !== 'Night Duty') {
+      return res.status(400).json({ error: 'dutyType must be "Day Duty" or "Night Duty".' });
+    }
     if (!guardEmpId) {
       return res.status(400).json({ error: 'guardEmpId is required.' });
     }
@@ -298,27 +339,57 @@ router.post('/', ownGuardOrAdmin, async (req, res) => {
       }
     }
 
-    const scanSetting = await ScanSetting.findOne({});
-    if (!isWithinScanWindow(scanSetting)) {
-      return res.status(400).json({
-        error: `Scanning is only accepted between ${formatHHmm(scanSetting.from)} and ${formatHHmm(scanSetting.to)}.`,
-      });
-    }
+    // Which duty is "current" for this guard (they may hold a Day AND a Night duty):
+    //   Day Duty   - the one dated today (IST).
+    //   Night Duty - an overnight shift is dated the day it STARTS, so after
+    //                midnight (while the Night window is still running) it is
+    //                yesterday's duty; otherwise it is today's.
+    // Old duties saved before duty types existed have no type and count as Night.
+    const today = istDayBounds(0);
+    const yesterday = istDayBounds(-1);
+    const nowIst = new Date(Date.now() + IST_OFFSET_MINUTES * 60000);
+    const nowMin = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
 
-    const { start, end } = todayBoundsUTC();
-    const assignment = await DutyAssignment.findOne({
+    // Is the overnight Night shift that started yesterday still running?
+    // (With no Night window saved, the first 5:30 hours after midnight count.)
+    const nightWindow = await windowFor('Night Duty');
+    const nightFromYesterday = nightWindow && nightWindow.from && nightWindow.to
+      ? minutesOf(nightWindow.from) > minutesOf(nightWindow.to) && nowMin < minutesOf(nightWindow.to)
+      : nowMin < 330;
+
+    const candidates = await DutyAssignment.find({
       guardEmpId,
-      dutyDate: { $gte: start, $lt: end },
+      dutyDate: { $gte: yesterday.start, $lt: today.end },
+    });
+    const current = candidates.filter((d) => {
+      const type = d.dutyType || 'Night Duty';
+      if (wantedType && type !== wantedType) return false;
+      const startedToday = d.dutyDate >= today.start;
+      if (type === 'Day Duty') return startedToday;
+      return nightFromYesterday ? !startedToday : startedToday;
     });
 
+    const assignment = current.find((d) => d.dutyPlaces.some((p) => p === scannedDutyPlace)) || current[0];
     if (!assignment) {
-      return res.status(404).json({ error: 'You have no duty assigned for today.' });
+      return res.status(404).json({
+        error: wantedType ? `You have no ${wantedType} assigned for today.` : 'You have no duty assigned for today.',
+      });
+    }
+    const dutyType = assignment.dutyType || 'Night Duty';
+
+    // Scanning is only accepted inside that duty type's own time window
+    // (Assign Duty -> Set Scan Time). No window saved = scanning stays open.
+    const scanSetting = await windowFor(dutyType);
+    if (!isWithinScanWindow(scanSetting)) {
+      return res.status(400).json({
+        error: `${dutyType} scanning is only accepted between ${formatHHmm(scanSetting.from)} and ${formatHHmm(scanSetting.to)}.`,
+      });
     }
 
     const isAssigned = assignment.dutyPlaces.some((p) => p === scannedDutyPlace);
     if (!isAssigned) {
       return res.status(400).json({
-        error: `"${scannedDutyPlace}" is not one of your assigned duty places today.`,
+        error: `"${scannedDutyPlace}" is not one of your assigned ${dutyType} places.`,
       });
     }
 
@@ -327,6 +398,7 @@ router.post('/', ownGuardOrAdmin, async (req, res) => {
       guardEmpId: assignment.guardEmpId,
       guardName: assignment.guardName,
       scannedDutyPlace,
+      dutyType,
       dateRange: assignment.dateRange,
       scannedAt: new Date(),
       // Only set when the phone sent a valid fix (see above).

@@ -6,18 +6,30 @@ const { Schema } = mongoose;
 // 12-hour + AM/PM only for display (see js/admin.js).
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+const DUTY_TYPES = ['Day Duty', 'Night Duty'];
+
 /**
- * The single global window during which QR scans are accepted (e.g. guards
- * may only scan between 18:00 and 06:00). There is only ever one document
- * in this collection - routes/scanSettings.js always reads/writes the first
- * one it finds (or creates it on the first save).
+ * Windows during which QR scans are accepted (e.g. 07:00-18:00 for Day Duty,
+ * 19:30-06:30 for Night Duty). Up to three documents live in this collection:
+ *   dutyType 'Day Duty'   - the Day window
+ *   dutyType 'Night Duty'  - the Night window
+ *   (no dutyType)          - the original single/general window saved before
+ *                            Day/Night existed; kept so nothing already saved
+ *                            is lost and older app versions keep working.
  */
 const ScanSettingSchema = new Schema(
   {
+    dutyType: { type: String, enum: DUTY_TYPES },
     from: { type: String, required: true, match: TIME_PATTERN },
     to: { type: String, required: true, match: TIME_PATTERN },
   },
   { timestamps: true }
+);
+
+// One window per duty type (documents without a dutyType are not constrained).
+ScanSettingSchema.index(
+  { dutyType: 1 },
+  { unique: true, partialFilterExpression: { dutyType: { $type: 'string' } } }
 );
 
 module.exports = mongoose.model('ScanSetting', ScanSettingSchema);

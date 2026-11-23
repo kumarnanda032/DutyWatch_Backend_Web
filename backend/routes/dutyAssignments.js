@@ -25,21 +25,34 @@ function cleanPlaceList(list) {
   return out;
 }
 
+const DUTY_TYPES = ['Day Duty', 'Night Duty'];
+
+// Mongo filter for "this duty type". Duties saved before duty types existed
+// have no dutyType and count as Night Duty.
+function dutyTypeFilter(type) {
+  return type === 'Night Duty' ? { $in: ['Night Duty', null] } : 'Day Duty';
+}
+
+// "YYYY-MM-DD" dates are parsed as UTC midnight, so read them back with the
+// UTC getters - that keeps the day correct whatever the server's timezone is.
 function toDDMMYYYY(d) {
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const yyyy = d.getUTCFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Duty shifts run overnight, so the display range is "start day_next day",
-// e.g. "10-01-2024_11-01-2024" - matching the format already used elsewhere
-// in the app. Returns null if dutyDateStr isn't a valid date.
-function computeDateRange(dutyDateStr) {
+// Display range for a duty:
+//   Day Duty   -> one date,            e.g. "10-01-2024"
+//   Night Duty -> start day_next day,  e.g. "10-01-2024_11-01-2024"
+// (the night shift runs overnight, so it covers two dates).
+// Returns null if dutyDateStr isn't a valid date.
+function computeDateRange(dutyDateStr, dutyType) {
   const start = new Date(dutyDateStr);
   if (isNaN(start.getTime())) return null;
+  if (dutyType === 'Day Duty') return toDDMMYYYY(start);
   const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  end.setUTCDate(end.getUTCDate() + 1);
   return `${toDDMMYYYY(start)}_${toDDMMYYYY(end)}`;
 }
 
@@ -69,19 +82,20 @@ function dutyStatus(dutyDate) {
 }
 
 
-// A duty place can only be covered by ONE guard on a given duty date. When a
+// A duty place can only be covered by ONE guard per duty date AND duty type. When a
 // place is (re)assigned to a guard, it is first removed from every OTHER
 // guard's assignment on that same date. If that leaves the other guard with no
 // places at all, their (now empty) assignment is deleted. Completed duties
 // (earlier dates) are never touched because only the chosen date is searched.
 // Returns [{ guardEmpId, guardName, places: [removed names], assignmentDeleted }]
-async function releasePlacesFromOtherGuards({ places, dutyDate, keepGuardEmpId, excludeId }) {
+async function releasePlacesFromOtherGuards({ places, dutyDate, dutyType, keepGuardEmpId, excludeId }) {
   const bounds = dayBoundsUTC(dutyDate);
   if (!bounds || !places.length) return [];
 
   const wanted = new Set(places.map((p) => p.toLowerCase()));
   const filter = {
     dutyDate: { $gte: bounds.start, $lt: bounds.end },
+    dutyType: dutyTypeFilter(dutyType), // a Day duty never takes places from a Night duty (or vice versa)
     guardEmpId: { $ne: keepGuardEmpId },
     dutyPlaces: { $in: places.map((p) => new RegExp(`^${escapeRegex(p)}$`, 'i')) },
   };
@@ -154,14 +168,19 @@ router.get('/', requireRole('admin'), async (req, res) => {
       }
     }
 
+    const typeQ = typeof req.query.dutyType === 'string' ? req.query.dutyType.trim() : '';
+    if (DUTY_TYPES.includes(typeQ)) filter.dutyType = dutyTypeFilter(typeQ);
+
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 10000);
     const skip = (page - 1) * limit;
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       DutyAssignment.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
       DutyAssignment.countDocuments(filter),
     ]);
+    // Old duties without a type are shown as Night Duty.
+    const data = rows.map((r) => ({ ...r.toObject(), dutyType: r.dutyType || 'Night Duty' }));
 
     res.json({ data, total, page, limit, totalPages: Math.max(Math.ceil(total / limit), 1) });
   } catch (err) {
@@ -200,7 +219,7 @@ router.get('/mine', ownGuardOrAdmin, async (req, res) => {
     }
 
     const docs = await DutyAssignment.find(filter).sort({ dutyDate: 1 }).lean();
-    const data = docs.map((d) => ({ ...d, status: dutyStatus(d.dutyDate) }));
+    const data = docs.map((d) => ({ ...d, dutyType: d.dutyType || 'Night Duty', status: dutyStatus(d.dutyDate) }));
 
     res.json({ data, total: data.length });
   } catch (err) {
@@ -210,7 +229,7 @@ router.get('/mine', ownGuardOrAdmin, async (req, res) => {
 });
 
 // POST /api/duty-assignments/bulk
-//   { dutyDate, assignments: [ { guardEmpId, guardName, dutyPlaces: [name, ...] }, ... ] }
+//   { dutyType: "Day Duty" | "Night Duty", dutyDate, assignments: [ { guardEmpId, guardName, dutyPlaces: [name, ...] }, ... ] }
 // Used by the drag-and-drop "Assign Duty to Guard" screen to submit every
 // duty card built in one batch. Each row is validated and inserted
 // independently (same pattern as /api/users/bulk) - one bad or duplicate
@@ -218,7 +237,11 @@ router.get('/mine', ownGuardOrAdmin, async (req, res) => {
 // only once per dateRange across the whole database.
 router.post('/bulk', requireRole('admin'), async (req, res) => {
   try {
-    const dateRange = computeDateRange(req.body.dutyDate);
+    const dutyType = req.body.dutyType;
+    if (!DUTY_TYPES.includes(dutyType)) {
+      return res.status(400).json({ error: 'Select a duty type: "Day Duty" or "Night Duty".' });
+    }
+    const dateRange = computeDateRange(req.body.dutyDate, dutyType);
     if (!dateRange) {
       return res.status(400).json({ error: 'A valid duty date is required.' });
     }
@@ -254,9 +277,12 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
       }
 
       try {
+        // Day and Night duties are separate: a guard can have one Day duty and
+        // one Night duty on the same date, but not two of the same type
+        // (dateRange differs per type, e.g. "17-11-2026" vs "17-11-2026_18-11-2026").
         const existing = await DutyAssignment.findOne({ guardEmpId, dateRange });
         if (existing) {
-          results.push({ index: i, guardName, status: 'skipped', reason: `${guardName} already has a duty assigned for ${dateRange}.` });
+          results.push({ index: i, guardName, status: 'skipped', reason: `${guardName} already has a ${dutyType} for ${dateRange}.` });
           continue;
         }
 
@@ -265,6 +291,7 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
         const movedFrom = await releasePlacesFromOtherGuards({
           places: dutyPlaces,
           dutyDate: req.body.dutyDate,
+          dutyType,
           keepGuardEmpId: guardEmpId,
         });
 
@@ -272,6 +299,7 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
           guardEmpId,
           guardName,
           dutyPlaces,
+          dutyType,
           dutyDate: new Date(req.body.dutyDate),
           dateRange,
         });
@@ -304,21 +332,26 @@ function isCompleted(dutyDate) {
   return bounds ? new Date(dutyDate) < bounds.start : false;
 }
 
-// PUT /api/duty-assignments/:id  { guardEmpId, guardName, dutyPlaces: [name, ...], dutyDate }
+// PUT /api/duty-assignments/:id  { guardEmpId, guardName, dutyPlaces: [name, ...], dutyDate, dutyType? }
 router.put('/:id', requireRole('admin'), async (req, res) => {
   try {
     const guardEmpId = String(req.body.guardEmpId || '').trim();
     const guardName = String(req.body.guardName || '').trim();
     const dutyPlaces = cleanPlaceList(req.body.dutyPlaces);
-    const dateRange = computeDateRange(req.body.dutyDate);
-
-    if (!guardEmpId || !guardName || dutyPlaces.length === 0 || !dateRange) {
-      return res.status(400).json({ error: 'Guard, duty places, and a valid duty date are all required.' });
-    }
 
     const doc = await DutyAssignment.findById(req.params.id);
     if (!doc) {
       return res.status(404).json({ error: 'Duty assignment not found.' });
+    }
+    // dutyType is optional on edit: keep the duty's current type when omitted.
+    const dutyType = req.body.dutyType !== undefined ? req.body.dutyType : (doc.dutyType || 'Night Duty');
+    if (!DUTY_TYPES.includes(dutyType)) {
+      return res.status(400).json({ error: 'Duty type must be "Day Duty" or "Night Duty".' });
+    }
+    const dateRange = computeDateRange(req.body.dutyDate, dutyType);
+
+    if (!guardEmpId || !guardName || dutyPlaces.length === 0 || !dateRange) {
+      return res.status(400).json({ error: 'Guard, duty places, and a valid duty date are all required.' });
     }
     if (isCompleted(doc.dutyDate)) {
       return res.status(409).json({ error: 'This duty has already been completed and can no longer be edited.' });
@@ -332,7 +365,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
 
     const dupe = await DutyAssignment.findOne({ _id: { $ne: doc._id }, guardEmpId, dateRange });
     if (dupe) {
-      return res.status(409).json({ error: `${guardName} already has a duty assigned for ${dateRange}.` });
+      return res.status(409).json({ error: `${guardName} already has a ${dutyType} for ${dateRange}.` });
     }
 
     // Remove these places from any OTHER guard on the chosen date first, so a
@@ -340,6 +373,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
     const reassigned = await releasePlacesFromOtherGuards({
       places: dutyPlaces,
       dutyDate: req.body.dutyDate,
+      dutyType,
       keepGuardEmpId: guardEmpId,
       excludeId: doc._id,
     });
@@ -347,6 +381,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
     doc.guardEmpId = guardEmpId;
     doc.guardName = guardName;
     doc.dutyPlaces = dutyPlaces;
+    doc.dutyType = dutyType;
     doc.dutyDate = new Date(req.body.dutyDate);
     doc.dateRange = dateRange;
 

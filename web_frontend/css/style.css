@@ -1761,3 +1761,82 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   accent-color: var(--amber);
   cursor: pointer;
 }
+
+/* ---------- Set Scan Time: Day Duty / Night Duty cards ---------- */
+.st-grid { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.st-card { flex: 1 1 320px; max-width: 400px; margin-bottom: 0; padding: 20px 20px 22px; border-top-width: 3px; --st-accent: var(--amber); --st-accent-soft: var(--amber-soft); border-top-color: var(--st-accent); }
+.st-night { --st-accent: #9da4ff; --st-accent-soft: rgba(157, 164, 255, 0.14); }
+.st-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 12px; border-radius: 8px; border-left: 3px solid var(--st-accent); background: var(--st-accent-soft); color: var(--st-accent); font-size: 15px; font-weight: 700; }
+.st-current { color: var(--st-accent); font-size: 12.5px; font-weight: 600; margin-bottom: 16px; min-height: 16px; }
+.st-time-row { display: flex; gap: 8px; }
+.st-time-row select { flex: 1; min-width: 0; padding: 10px 6px; text-align: center; }
+.st-submit { display: inline-flex; align-items: center; gap: 8px; width: auto; margin-top: 14px; padding: 10px 20px; background: var(--st-accent); color: var(--navy-950); }
+.st-submit:hover { filter: brightness(1.08); }
+.st-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---------- Assign Duty: tab icons + Duty type picker ---------- */
+.tab-btn { display: inline-flex; align-items: center; gap: 8px; }
+.tab-btn .tab-icon { flex: none; }
+.assign-top { display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap; margin-bottom: 16px; }
+.assign-top-card { flex: 0 1 280px; margin-bottom: 0; }
+.duty-type-note { align-self: center; color: var(--ink-300); font-size: 13px; }
+.duty-type-wrap { position: relative; }
+.duty-type-wrap select { width: 100%; padding-left: 40px; padding-right: 38px; appearance: none; -webkit-appearance: none; cursor: pointer; font-weight: 600; }
+.duty-type-icon, .duty-type-chev { position: absolute; top: 50%; transform: translateY(-50%); display: inline-flex; pointer-events: none; color: var(--ink-500); }
+.duty-type-icon { left: 14px; }
+.duty-type-chev { right: 12px; }
+/* Everything in the top row follows the chosen duty type's colour. */
+.assign-top.is-day { --dt-accent: var(--amber); }
+.assign-top.is-night { --dt-accent: #9da4ff; }
+.duty-type-wrap .duty-type-icon { color: var(--dt-accent); }
+.duty-type-wrap select { color: var(--dt-accent); }
+.assign-top.is-day .duty-type-wrap select, .assign-top.is-night .duty-type-wrap select { border-color: var(--dt-accent); }
+.duty-type-note b { color: var(--dt-accent); }
+.duty-date-wrap { position: relative; }
+.duty-date-wrap input { width: 100%; padding-left: 40px; }
+.duty-date-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: inline-flex; color: var(--dt-accent); pointer-events: none; z-index: 1; }
+/* Hide the browser's own calendar icon but keep the whole field clickable. */
+.duty-date-wrap input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.badge-night { background: rgba(157, 164, 255, 0.15); color: #9da4ff; }
+:root[data-theme="light"] .duty-date-wrap input::-webkit-calendar-picker-indicator { opacity: 0; }
+
+/* ---------- Show Assigned Duties toolbar ---------- */
+.duty-type-filter { --dt-accent: var(--ink-300); min-width: 170px; }
+.duty-type-wrap.is-day { --dt-accent: var(--amber); }
+.duty-type-wrap.is-night { --dt-accent: #9da4ff; }
+.duty-type-filter select { height: 100%; }
+.duty-type-wrap.is-day select, .duty-type-wrap.is-night select { border-color: var(--dt-accent); }
+.has-search-icon { padding-left: 40px !important; background-repeat: no-repeat; background-position: 14px 50%; background-size: 16px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237e8ba1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E"); }
+.btn-with-icon { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ---------- Home top bar: Day Duty | Night Duty toggle ---------- */
+.duty-toggle { display: inline-flex; gap: 4px; padding: 4px; background: var(--navy-900); border: 1px solid var(--navy-line); border-radius: 12px; }
+.duty-toggle[hidden] { display: none; }
+.duty-toggle-btn { display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 0; border-radius: 9px; padding: 7px 14px; color: var(--ink-300); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background .15s, color .15s; }
+.duty-toggle-btn:hover { color: var(--ink-100); }
+.duty-toggle-btn.is-day.active { background: #e8a33d; color: #0a1120; }
+.duty-toggle-btn.is-night.active { background: #9da4ff; color: #0a1120; }
+@media (max-width: 700px) { .duty-toggle-btn span { display: none; } .duty-toggle-btn { padding: 8px 10px; } }
+
+/* ---------- Home: page accent follows the duty type ----------
+   Day Duty keeps the normal amber. Night Duty swaps the accent variables to blue,
+   so the avatar, active menu item, banner, table header line and buttons all change. */
+body.home-night { --amber: #9da4ff; --amber-dark: #7f87f0; --amber-soft: rgba(157, 164, 255, 0.14); }
+:root[data-theme="light"] body.home-night { --amber: #5b62d6; --amber-dark: #474ec0; --amber-soft: rgba(91, 98, 214, 0.12); }
+.scan-banner { margin: 0 0 14px; padding: 14px 18px; border-radius: 8px; border-left: 3px solid var(--amber); background: var(--amber-soft); color: var(--amber); font-size: 15px; }
+.recent-scans-table thead th { border-bottom: 2px solid var(--amber); }
+
+/* ---------- Assign Duty: colours follow the duty type (amber = Day, blue = Night) ---------- */
+#tab-assignDuty { --dt-accent: var(--ink-500); --dt-soft: rgba(126, 139, 161, 0.08); }
+#tab-assignDuty.is-day { --dt-accent: #e8a33d; --dt-soft: rgba(232, 163, 61, 0.09); }
+#tab-assignDuty.is-night { --dt-accent: #9da4ff; --dt-soft: rgba(157, 164, 255, 0.10); }
+:root[data-theme="light"] #tab-assignDuty.is-day { --dt-accent: #c47a0f; --dt-soft: rgba(212, 136, 26, 0.10); }
+:root[data-theme="light"] #tab-assignDuty.is-night { --dt-accent: #5b62d6; --dt-soft: rgba(91, 98, 214, 0.10); }
+.assigned-group-label { margin: 14px 2px 8px; color: var(--dt-accent); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+#tab-assignDuty .duty-mini-card.existing-duty { border-color: var(--dt-accent); background: var(--dt-soft); }
+#tab-assignDuty .duty-mini-card .existing-badge:not(.new-badge) { color: var(--dt-accent); }
+#tab-assignDuty .duty-mini-card .existing-badge:not(.new-badge) .duty-no { background: var(--dt-soft); color: var(--dt-accent); }
+#tab-assignDuty .duty-mini-card.existing-duty .mini-place { border: 1px solid var(--dt-accent); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+#tab-assignDuty .duty-mini-card .new-badge { color: var(--dt-accent); }
+#tab-assignDuty .duty-mini-card .new-badge .duty-no { background: var(--dt-soft); color: var(--dt-accent); }

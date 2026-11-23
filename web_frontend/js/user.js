@@ -120,13 +120,15 @@ const dutyState = { loaded: false, error: null, data: [] };
 // The QR-scan window shown in the Home "Reminder". It is the global setting
 // the admin saves under Assign Duty -> Set Scan Time (GET /api/scan-settings),
 // so the reminder always matches what the server actually enforces.
-const scanState = { loaded: false, error: null, from: null, to: null };
+const scanState = { loaded: false, error: null, from: null, to: null, day: {}, night: {} };
 
 async function loadScanWindow() {
   try {
     const res = await fetchScanTimeViaApi(); // { from, to } - 24h "HH:mm", both null if never saved
     scanState.from = res.from || null;
     scanState.to = res.to || null;
+    scanState.day = res.day || {};
+    scanState.night = res.night || {};
     scanState.error = null;
     scanState.loaded = true;
   } catch (err) {
@@ -150,10 +152,18 @@ function reminderText() {
       ? `<span style="color:var(--danger);">Couldn't load the scan time: ${esc(scanState.error)}</span>`
       : 'Loading scan time…';
   }
-  if (!scanState.from || !scanState.to) {
-    return 'The admin has not set a QR scan time yet.';
+  const parts = [];
+  if (scanState.day.from && scanState.day.to) {
+    parts.push(`<strong>Day Duty</strong>: ${esc(formatTime12(scanState.day.from))} – ${esc(formatTime12(scanState.day.to))}`);
   }
-  return `QR scanning is only accepted between <strong>${esc(formatTime12(scanState.from))}</strong> and <strong>${esc(formatTime12(scanState.to))}</strong>. Scans outside this window will be rejected.`;
+  if (scanState.night.from && scanState.night.to) {
+    parts.push(`<strong>Night Duty</strong>: ${esc(formatTime12(scanState.night.from))} – ${esc(formatTime12(scanState.night.to))}`);
+  }
+  if (!parts.length && scanState.from && scanState.to) {
+    parts.push(`${esc(formatTime12(scanState.from))} – ${esc(formatTime12(scanState.to))}`);
+  }
+  if (!parts.length) return 'The admin has not set a QR scan time yet.';
+  return `QR scanning is only accepted during: ${parts.join(' &nbsp;|&nbsp; ')}. Scans outside these windows will be rejected.`;
 }
 let dutyLoadSeq = 0; // ignore out-of-order responses if the guard clicks around quickly
 
@@ -289,7 +299,7 @@ function dutyRow(d, serial) {
   return `
     <tr>
       <td class="serial-col">${serial}</td>
-      <td style="white-space:nowrap;">${esc(prettyRange(d.dateRange))}</td>
+      <td style="white-space:nowrap;">${esc(prettyRange(d.dateRange))}<br><span style="color:var(--ink-500); font-size:11.5px;">${esc(d.dutyType || 'Night Duty')}</span></td>
       <td>${STATUS_BADGE[d.status] || ''}</td>
       <td>${(d.dutyPlaces || []).map(dutyPlaceChip).join('')}</td>
     </tr>`;
