@@ -165,6 +165,95 @@ function reminderText() {
   if (!parts.length) return 'The admin has not set a QR scan time yet.';
   return `QR scanning is only accepted during: ${parts.join(' &nbsp;|&nbsp; ')}. Scans outside these windows will be rejected.`;
 }
+// Duty-type pill (moon = Night, sun = Day) used in the Reminder and the table.
+const SUN_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>';
+
+function dutyTypePill(type) {
+  const isDay = type === 'Day Duty';
+  return `<span class="duty-type-pill duty-themed ${isDay ? 'is-day' : 'is-night'}">${isDay ? SUN_ICON : MOON_ICON}<span>${isDay ? 'Day Duty' : 'Night Duty'}</span></span>`;
+}
+
+// Works out the duty that is running right now from data the page already has
+// (the guard's duties + the admin's scan windows), so the Reminder does not
+// depend on the backend sending currentDuty. Same rules as the server:
+//   Day Duty   - the duty dated today.
+//   Night Duty - dated the day it STARTS; after midnight, while the night
+//                window is still running, it is yesterday's duty.
+function isoLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function hhmmMinutes(hhmm) {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return h * 60 + m;
+}
+function windowOf(type) {
+  const w = type === 'Day Duty' ? scanState.day : scanState.night;
+  if (w && w.from && w.to) return { from: w.from, to: w.to };
+  if (scanState.from && scanState.to) return { from: scanState.from, to: scanState.to };
+  return null;
+}
+function windowOpenNow(w, nowMin) {
+  if (!w) return true;
+  const f = hhmmMinutes(w.from), t = hhmmMinutes(w.to);
+  if (f === t) return true;
+  return f < t ? nowMin >= f && nowMin < t : nowMin >= f || nowMin < t;
+}
+function clientCurrentDuties() {
+  if (!dutyState.loaded) return [];
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const todayStr = isoLocal(now);
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  const yesterdayStr = isoLocal(y);
+
+  const nightW = windowOf('Night Duty');
+  const nightFromYesterday = nightW
+    ? hhmmMinutes(nightW.from) > hhmmMinutes(nightW.to) && nowMin < hhmmMinutes(nightW.to)
+    : nowMin < 330;
+
+  // Every duty running today (a guard can hold a Day AND a Night duty), Day first.
+  const found = {};
+  for (const d of dutyState.data) {
+    const type = d.dutyType || 'Night Duty';
+    const dateStr = String(d.dutyDate || '').slice(0, 10);
+    const current = type === 'Day Duty'
+      ? dateStr === todayStr
+      : dateStr === (nightFromYesterday ? yesterdayStr : todayStr);
+    if (current) found[type] = { dutyType: type, scanWindow: windowOf(type) };
+  }
+  return ['Day Duty', 'Night Duty'].filter((t) => found[t]).map((t) => found[t]);
+}
+
+function reminderLine(cd) {
+  const w = cd.scanWindow;
+  const text = w && w.from && w.to
+    ? `scan between <strong>${esc(formatTime12(w.from))}</strong> and <strong>${esc(formatTime12(w.to))}</strong>`
+    : 'scanning has no time limit set by the admin';
+  return `<div class="reminder-row">${dutyTypePill(cd.dutyType)}<span class="reminder-text">${text}</span></div>`;
+}
+
+// Reminder body: one line per duty the guard has today - the duty type pill
+// and ITS scan window, e.g.
+//   Day Duty    scan between 6:00 AM and 5:00 PM
+//   Night Duty  scan between 7:30 PM and 6:30 AM
+// With no duty running today it lists every window the admin has set.
+function reminderHtml() {
+  const u = currentUser() || user;
+  let list = clientCurrentDuties();
+  if (!list.length && u && u.currentDuty && u.currentDuty.dutyType) list = [u.currentDuty];
+  if (list.length) return `<div class="reminder-rows">${list.map(reminderLine).join('')}</div>`;
+  return `<p style="color:var(--ink-300); font-size:13.5px;">${reminderText()}</p>`;
+}
+
+// Refreshes the cached profile (incl. currentDuty) from /api/auth/me.
+async function loadCurrentDuty() {
+  try {
+    const r = await verifySessionViaApi();
+    if (r && r.ok === true) setCurrentUser(r.user);
+  } catch (err) { /* keep whatever is cached */ }
+}
+
 let dutyLoadSeq = 0; // ignore out-of-order responses if the guard clicks around quickly
 
 async function loadMyDuties() {
@@ -203,7 +292,7 @@ function render(section) {
 
   if (DUTY_SECTIONS.includes(section)) {
     const jobs = [loadMyDuties()];
-    if (section === 'home') jobs.push(loadScanWindow()); // Reminder text from the database
+    if (section === 'home') { jobs.push(loadScanWindow()); jobs.push(loadCurrentDuty()); } // Reminder from the database
     Promise.all(jobs).then(() => {
       if (currentSection === section) paint(section); // still on this page -> show fresh data
     });
@@ -284,7 +373,7 @@ function dutyPageSlice() {
   return { all, total, totalPages, start, pageItems: all.slice(start, start + dutyPageSize) };
 }
 
-// One row per duty: #, Duty Date Range, Status, Duty Places.
+// One row per duty: #, Duty Date Range, Duty Type, Status, Duty Places.
 // A scanned duty place gets a green tick, an unscanned one a red cross - so a
 // guard can tell at a glance which places on a duty they still need to
 // visit.
@@ -299,7 +388,8 @@ function dutyRow(d, serial) {
   return `
     <tr>
       <td class="serial-col">${serial}</td>
-      <td style="white-space:nowrap;">${esc(prettyRange(d.dateRange))}<br><span style="color:var(--ink-500); font-size:11.5px;">${esc(d.dutyType || 'Night Duty')}</span></td>
+      <td style="white-space:nowrap;">${esc(prettyRange(d.dateRange))}</td>
+      <td>${dutyTypePill(d.dutyType || 'Night Duty')}</td>
       <td>${STATUS_BADGE[d.status] || ''}</td>
       <td>${(d.dutyPlaces || []).map(dutyPlaceChip).join('')}</td>
     </tr>`;
@@ -329,7 +419,7 @@ function dutySection() {
       </div>
       <div class="table-scroll duty-table">
         <table>
-          <thead><tr><th class="serial-col">#</th><th>Duty Date Range</th><th>Status</th><th>Duty Places</th></tr></thead>
+          <thead><tr><th class="serial-col">#</th><th>Duty Date Range</th><th>Duty Type</th><th>Status</th><th>Duty Places</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -373,12 +463,15 @@ function todayISODate() {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+// Large image icon shown in the empty preview tile (before a photo is picked).
+const IMAGE_PLACEHOLDER_ICON = '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
 const renderers = {
   home: () => {
     return `
     <div class="card reminder-card">
       <div class="card-title">Reminder</div>
-      <p style="color:var(--ink-300); font-size:13.5px;">${reminderText()}</p>
+      ${reminderHtml()}
     </div>
     ${staleWarning()}
     ${dutyPlaceholder() ? `<div class="section-head duty-head" style="margin:26px 0 4px;"><h2>My Duties</h2><p>Duties your admin has assigned to you.</p></div>${dutyPlaceholder()}` : dutySection()}
@@ -389,25 +482,25 @@ const renderers = {
     ${sectionHead('Images', 'Upload site-visit photo evidence and review the photos you have submitted.')}
 
     <div class="tabs" id="imagesTabs">
-      <button class="tab-btn active" data-tab="uploadImage" type="button">Upload Images</button>
-      <button class="tab-btn" data-tab="getImages" type="button">Get Images</button>
+      <button class="tab-btn active" data-tab="uploadImage" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span>Upload Images</span></button>
+      <button class="tab-btn" data-tab="getImages" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg><span>Get Images</span></button>
     </div>
 
     <div class="tab-panel" id="tab-uploadImage">
       <div class="card" style="max-width:420px;">
-        <div class="image-tile" style="margin-bottom:14px;"><div class="ph" style="height:160px;">🖼</div></div>
+        <div class="image-tile" style="margin-bottom:14px;"><div class="ph" style="height:160px;">${IMAGE_PLACEHOLDER_ICON}</div></div>
         <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" style="display:none;">
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-outline" id="pickImgBtn" style="flex:1;">Pick Image</button>
+          <button class="btn btn-outline btn-with-icon" id="pickImgBtn" style="flex:1; justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Pick Image</span></button>
         </div>
         <div class="field" style="margin-top:14px;">
-          <label>Comment <span style="color:var(--amber);">*</span></label>
+          <label class="label-with-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.8-.9L3 20l1.1-4.9A8.4 8.4 0 1121 11.5z"/></svg><span>Comment <span style="color:var(--amber);">*</span></span></label>
           <textarea id="imageCommentInput" rows="3" maxlength="500" placeholder="Describe what this photo shows (required, min 3 characters)"></textarea>
           <div style="display:flex; justify-content:flex-end; margin-top:4px;">
             <span id="imageCommentCount" style="font-size:11px; color:var(--ink-500);">0 / 500</span>
           </div>
         </div>
-        <button class="btn btn-primary" id="uploadImgBtn" style="width:100%;" disabled>Upload</button>
+        <button class="btn btn-primary btn-with-icon" id="uploadImgBtn" style="width:100%; justify-content:center;" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span id="uploadImgLabel">Upload</span></button>
         <div class="error-text" id="imageUploadError"></div>
         <p style="color:var(--ink-500); font-size:11.5px; margin-top:8px;">
           Accepted formats: JPG, JPEG, PNG only. Size must be between 10 KB and 2 MB. Comment must be 3-500 characters.
@@ -427,15 +520,19 @@ const renderers = {
     <div class="card">
       <div class="data-toolbar">
         <div class="toolbar-right" style="margin-left:0; gap:10px; flex-wrap:wrap;">
-          <select id="logsFilter">
-            <option value="date" selected>Date</option>
-            <option value="all">All</option>
-          </select>
-          <input type="date" id="logsDate" value="${todayISODate()}" max="${todayISODate()}">
+          <div class="icon-field"><span class="field-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></span>
+            <select id="logsFilter">
+              <option value="date" selected>Date</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+          <div class="icon-field" id="logsDateWrap"><span class="field-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg></span>
+            <input type="date" id="logsDate" value="${todayISODate()}" max="${todayISODate()}">
+          </div>
         </div>
         <div class="toolbar-right" style="margin-left:auto;">
           <span id="logsSummary" style="font-size:12.5px; color:var(--ink-500);"></span>
-          <button class="btn btn-outline" id="downloadLogsPdfBtn" type="button" style="width:auto; padding:9px 16px;" disabled>⬇ Download PDF</button>
+          <button class="btn btn-outline btn-with-icon" id="downloadLogsPdfBtn" type="button" style="width:auto; padding:9px 16px;" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg><span>Download PDF</span></button>
         </div>
       </div>
       <div class="table-scroll" id="logsTableWrap">
@@ -482,8 +579,8 @@ renderers.account = () => {
   return `
     ${sectionHead('Personal Data', 'Your profile details and password.')}
     <div class="tabs" id="accountTabs">
-      <button class="tab-btn active" data-tab="accProfile" type="button">Profile</button>
-      <button class="tab-btn" data-tab="accPassword" type="button">Change Password</button>
+      <button class="tab-btn active" data-tab="accProfile" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+      <button class="tab-btn" data-tab="accPassword" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Change Password</span></button>
     </div>
     <div class="tab-panel" id="tab-accProfile">${strip(renderers.profile())}</div>
     <div class="tab-panel" id="tab-accPassword" style="display:none;">${strip(renderers.changePassword())}</div>
@@ -553,7 +650,7 @@ pdfBtn.addEventListener('click', () => {
         // glyphs and silently corrupts them if printed as text, so the icons
         // are vector lines, not characters, which is why this needs manual
         // layout instead of a plain autoTable text cell.
-        const ICON_COLUMN = 3;
+        const ICON_COLUMN = 4;
         const LINE_HEIGHT = 4.6; // mm per wrapped line
         const CELL_TOP_PAD = 2.4; // mm, matches autoTable's own cell padding
         const CELL_SIDE_PAD = 2; // mm
@@ -590,6 +687,7 @@ pdfBtn.addEventListener('click', () => {
         const body = all.map((d, i) => [
           String(i + 1),
           prettyRange(d.dateRange).replace(' \u2192 ', ' to '),
+          d.dutyType || 'Night Duty',
           STATUS_LABEL[d.status] || d.status,
           { content: '', styles: { minCellHeight: layouts[i].length * LINE_HEIGHT + CELL_TOP_PAD } },
         ]);
@@ -603,7 +701,7 @@ pdfBtn.addEventListener('click', () => {
         doc.autoTable({
           startY: 26,
           theme: 'grid',
-          head: [['#', 'Duty Date Range', 'Status', 'Duty Places (tick = scanned)']],
+          head: [['#', 'Duty Date Range', 'Duty Type', 'Status', 'Duty Places (tick = scanned)']],
           body,
           styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
           headStyles: { fillColor: [18, 33, 58] },
@@ -714,7 +812,7 @@ pdfBtn.addEventListener('click', () => {
           scans.sort((x, y) => (Date.parse(x.at) || 0) - (Date.parse(y.at) || 0));
           return { name: sp.name, scanned: !!sp.scanned, scans };
         });
-        subs.forEach((sub, i) => rows.push({ group: g, groupIndex: gi + 1, span: subs.length, first: i === 0, sub }));
+        subs.forEach((sub, i) => rows.push({ group: g, groupIndex: gi + 1, span: subs.length, first: i === 0, sub, subIndex: i + 1 }));
       });
       return rows;
     }
@@ -726,9 +824,11 @@ pdfBtn.addEventListener('click', () => {
         const zebra = r.groupIndex % 2 === 0 ? ' style="background:rgba(255,255,255,0.025);"' : '';
         const merged = r.first
           ? `<td class="serial-col grp-first" rowspan="${r.span}" style="vertical-align:top;">${r.groupIndex}</td>
-             <td rowspan="${r.span}" style="vertical-align:top; white-space:nowrap;">${esc(prettyRange(r.group.dateRange))}</td>`
+             <td rowspan="${r.span}" style="vertical-align:top; white-space:nowrap;">${esc(prettyRange(r.group.dateRange))}</td>
+             <td rowspan="${r.span}" style="vertical-align:top;">${dutyTypePill(r.group.dutyType || 'Night Duty')}</td>`
           : '';
         return `<tr${zebra}>${merged}
+          <td class="serial-col">${r.subIndex}</td>
           <td class="preserve-space">${esc(r.sub.name)}</td>
           <td class="status-col"><span class="status-pill ${r.sub.scanned ? 'is-scanned' : 'is-pending'}">${r.sub.scanned ? ICON_CHECK : ICON_PENDING}${r.sub.scanned ? 'Scanned' : 'Not scanned'}</span></td>
           <td>${scanSlotsHtml(r.sub, timelineChipHtml)}</td>
@@ -739,11 +839,11 @@ pdfBtn.addEventListener('click', () => {
       return `
         <table class="recent-scans-table" style="min-width:1000px;">
           <colgroup>
-            <col style="width:5%;"><col style="width:17%;"><col style="width:24%;">
-            <col style="width:14%;"><col style="width:20%;"><col style="width:20%;">
+            <col style="width:4%;"><col style="width:14%;"><col style="width:12%;"><col style="width:6%;">
+            <col style="width:22%;"><col style="width:12%;"><col style="width:15%;"><col style="width:15%;">
           </colgroup>
           <thead><tr>
-            <th class="serial-col">#</th><th>Duty Date Range</th><th>Duty Place</th>
+            <th class="serial-col">#</th><th>Duty Date Range</th><th>Duty Type</th><th class="serial-col">Place #</th><th>Duty Place</th>
             <th class="status-col">Status</th><th>Scanned At (Timeline)</th><th>Geo-Coordinates</th>
           </tr></thead>
           <tbody>${body}</tbody>
@@ -757,7 +857,7 @@ pdfBtn.addEventListener('click', () => {
     async function loadLogs() {
       const seq = ++logsSeq;
       const byDate = filterSel.value === 'date';
-      dateInput.style.display = byDate ? '' : 'none'; // "All" -> no date picker
+      document.getElementById('logsDateWrap').style.display = byDate ? '' : 'none'; // "All" -> no date picker
 
       // Date mode needs a valid date: an empty/partial picker falls back to
       // today, and a future date is clamped to today.
@@ -832,7 +932,9 @@ pdfBtn.addEventListener('click', () => {
           row.push({ content: String(r.groupIndex), rowSpan: r.span, styles: { valign: 'top' } });
           // Plain "to" - the PDF's built-in font has no arrow glyph.
           row.push({ content: String(r.group.dateRange || '').replace('_', ' to '), rowSpan: r.span, styles: { valign: 'top' } });
+          row.push({ content: r.group.dutyType || 'Night Duty', rowSpan: r.span, styles: { valign: 'top' } });
         }
+        row.push(String(r.subIndex));
         row.push(r.sub.name);
         row.push(r.sub.scanned ? 'Scanned' : 'Not scanned');
         const pdfLines = pick => (r.sub.scanned && r.sub.scans.length ? r.sub.scans.map(pick).join('\n') : '-');
@@ -851,12 +953,12 @@ pdfBtn.addEventListener('click', () => {
       doc.autoTable({
         startY: 26,
         theme: 'grid',
-        head: [['#', 'Duty Date Range', 'Duty Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
+        head: [['#', 'Duty Date Range', 'Duty Type', 'Place #', 'Duty Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
         body,
         styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
         headStyles: { fillColor: [18, 33, 58] },
         // keep the time and coordinates on one line each (no wrapping mid-value)
-        columnStyles: { 4: { cellWidth: 'wrap' }, 5: { cellWidth: 'wrap' } },
+        columnStyles: { 6: { cellWidth: 'wrap' }, 7: { cellWidth: 'wrap' } },
       });
       doc.save(`logs_${user.roll_no}_${loaded.byDate ? loaded.date : 'all'}.pdf`);
     });
@@ -924,7 +1026,7 @@ pdfBtn.addEventListener('click', () => {
     function resetSelection() {
       selectedFile = null;
       fileInput.value = '';
-      previewTile.innerHTML = '🖼';
+      previewTile.innerHTML = IMAGE_PLACEHOLDER_ICON;
       refreshUploadButton();
     }
 
@@ -1001,7 +1103,7 @@ pdfBtn.addEventListener('click', () => {
       errBox.textContent = '';
       uploadBtn.disabled = true;
       pickBtn.disabled = true;
-      uploadBtn.textContent = 'Uploading...';
+      document.getElementById('uploadImgLabel').textContent = 'Uploading...';
       try {
         await uploadImageViaApi({
           file: selectedFile,
@@ -1017,7 +1119,7 @@ pdfBtn.addEventListener('click', () => {
         errBox.textContent = err.message || 'Could not upload the image.';
         refreshUploadButton();
       } finally {
-        uploadBtn.textContent = 'Upload';
+        document.getElementById('uploadImgLabel').textContent = 'Upload';
         pickBtn.disabled = false;
       }
     });

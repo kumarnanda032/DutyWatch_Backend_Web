@@ -1901,3 +1901,34 @@ body.home-night { --amber: #9da4ff; --amber-dark: #7f87f0; --amber-soft: rgba(15
 .notice-box.duty-themed .notice-icon { background: var(--dt-soft); color: var(--dt-accent); }
 .notice-box.duty-themed .notice-icon.notice-error { background: rgba(229,83,83,0.16); color: #e55353; }
 .notice-box.duty-themed .btn-primary:focus-visible { outline: 2px solid var(--dt-accent); outline-offset: 2px; }
+
+
+/* ---------- Guard Home: duty-type pill + Reminder row ---------- */
+.duty-type-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border: 1px solid var(--dt-accent); border-radius: 999px;
+  color: var(--dt-accent); background: var(--dt-soft); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.duty-type-pill svg { flex: none; }
+.reminder-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; color: var(--ink-300); font-size: 13.5px; }
+.reminder-row strong { color: var(--ink-100); }
+.duty-table .duty-type-pill { padding: 3px 11px; font-size: 11.5px; }
+
+.reminder-card .card-title { margin-bottom: 10px; line-height: 1.3; }
+.reminder-rows { display: flex; flex-direction: column; gap: 8px; }
+
+.label-with-icon { display: flex; align-items: center; gap: 7px; }
+.label-with-icon svg { flex: none; color: var(--ink-500); }
+.image-tile .ph svg { opacity: 0.85; }
+
+/* ---------- Logs/Data toolbar: icon inside the Date filter + date picker ---------- */
+.icon-field { position: relative; display: inline-flex; align-items: center; }
+.icon-field .field-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: inline-flex; color: var(--ink-300); pointer-events: none; z-index: 1; }
+.icon-field select, .icon-field input { padding-left: 40px; }
+.icon-field select { -webkit-appearance: none; appearance: none; padding-right: 36px; cursor: pointer;
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237e8ba1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+/* hide the browser's own calendar icon but keep the whole field clickable */
+.icon-field input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+/* The toolbar's own date-input rule is more specific than .icon-field input,
+   so repeat the padding here to keep the text clear of the left icon. */
+.data-toolbar .icon-field input[type="date"] { padding: 9px 14px 9px 42px; min-width: 150px; }
+.data-toolbar .icon-field select { padding: 9px 36px 9px 42px; }

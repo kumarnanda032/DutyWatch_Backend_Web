@@ -3031,9 +3031,10 @@ function attachHandlers(section) {
 
       openModal(`
         <h3>Edit duty assignment</h3>
+        <p style="color:var(--ink-500); font-size:12.5px; margin:-4px 0 14px;">Only the duty places can be changed. The guard, duty type and date are fixed once assigned.</p>
         <div class="field">
           <label>Guard</label>
-          <select id="editAssignGuard">
+          <select id="editAssignGuard" disabled>
             <option value="">Select guard</option>
             ${guardsData.map(g => `<option value="${g._id}" data-emp-id="${escapeHtml(g.roll_no)}" data-name="${escapeHtml(g.first_name)}" ${g.roll_no === a.guardEmpId ? 'selected' : ''}>${escapeHtml(g.first_name)} (${escapeHtml(g.roll_no)})</option>`).join('')}
           </select>
@@ -3050,12 +3051,12 @@ function attachHandlers(section) {
         </div>
         <div class="field">
           <label>Duty type</label>
-          <select id="editAssignType">
+          <select id="editAssignType" disabled>
             <option value="Day Duty" ${a.dutyType === 'Day Duty' ? 'selected' : ''}>Day Duty</option>
             <option value="Night Duty" ${a.dutyType === 'Day Duty' ? '' : 'selected'}>Night Duty</option>
           </select>
         </div>
-        <div class="field"><label>Duty date</label><input type="date" id="editAssignDate" value="${dutyDateVal}" min="${todayISODate()}" /></div>
+        <div class="field"><label>Duty date</label><input type="date" id="editAssignDate" value="${dutyDateVal}" disabled /></div>
         <div class="error-text" id="editAssignError"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline" id="editAssignCancelBtn">Cancel</button>
@@ -3073,25 +3074,16 @@ function attachHandlers(section) {
         const chosenPlaces = [...document.querySelectorAll('#editAssignPlaces .edit-place-check:checked')].map(c => c.value);
         const dutyDate = document.getElementById('editAssignDate').value;
 
-        if (!guardSelect.value || chosenPlaces.length === 0 || !dutyDate) {
-          errBox.textContent = 'Guard, at least one duty place, and duty date are all required.';
-          return;
-        }
-        if (dutyDate < todayISODate()) {
-          errBox.textContent = 'Duty date cannot be moved into the past. Choose today or a later date.';
+        if (chosenPlaces.length === 0) {
+          errBox.textContent = 'Select at least one duty place.';
           return;
         }
 
         const btn = document.getElementById('editAssignSaveBtn');
         btn.disabled = true;
         try {
-          await updateDutyAssignmentViaApi(id, {
-            guardEmpId: guardOpt.dataset.empId,
-            guardName: guardOpt.dataset.name,
-            dutyPlaces: chosenPlaces,
-            dutyType: document.getElementById('editAssignType').value,
-            dutyDate,
-          });
+          // Only the places are sent - guard, duty type and date cannot be edited.
+          await updateDutyAssignmentViaApi(id, { dutyPlaces: chosenPlaces });
           closeModal();
           loadAssignedDuties();
         } catch (err) {
