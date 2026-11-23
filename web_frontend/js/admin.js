@@ -565,7 +565,8 @@ const renderers = {
         <div class="card assign-col">
           <div class="card-title title-with-badge"><span class="title-badge tone-purple"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span><span>Duty Places</span></div>
           <input type="text" id="assignPlacesSearch" class="mini-search has-search-icon" placeholder="Search duty places..." />
-          <div class="assign-hint">Drag a place onto a guard's card in the Duty Assignments column</div>
+          <div class="assign-hint">Drag a place onto a guard's card in the Duty Assignments column, or assign all places at once</div>
+          <button type="button" class="btn btn-outline" id="assignAllPlacesBtn" style="width:100%; margin-bottom:10px; padding:8px 12px; font-size:13px;">Select all duty places</button>
           <div id="assignPlacesList" class="assign-list"><p style="color:var(--ink-500); font-size:13px;">Loading...</p></div>
         </div>
         <div class="card assign-col">
@@ -2801,6 +2802,30 @@ function attachHandlers(section) {
       if (!item || item.classList.contains('used')) { e.preventDefault(); return; }
       e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'guard', id: item.dataset.guardId }));
       e.dataTransfer.effectAllowed = 'copy';
+    });
+
+    // One click: add every still-available duty place (matching the current
+    // search, if any) to the guard's card. Uses the most recent card, or the
+    // only card when there is just one.
+    document.getElementById('assignAllPlacesBtn').addEventListener('click', () => {
+      if (pendingDuties.length === 0) {
+        showNotice('Drag a guard into the Duty Assignments column first, then select all duty places.', { type: 'info', title: 'Action needed', accent: dutyAccent() });
+        return;
+      }
+      const target = pendingDuties[pendingDuties.length - 1];
+      const used = usedPlaceKeys();
+      const available = placesData.filter(p =>
+        p.place.toLowerCase().includes(placesFilter.toLowerCase()) &&
+        !used.has(p.place.toLowerCase())
+      );
+      if (!available.length) {
+        showNotice('No unassigned duty places are left to add for this date.', { type: 'info', title: 'Action needed', accent: dutyAccent() });
+        return;
+      }
+      available.forEach(p => target.dutyPlaces.push(p.place));
+      renderDropZone();
+      renderPlacesList();
+      showNotice(`${available.length} duty place${available.length === 1 ? '' : 's'} added to ${target.guardName}.`, { type: 'info', title: 'Done', accent: dutyAccent() });
     });
 
     dropZone.addEventListener('dragover', (e) => {
