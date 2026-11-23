@@ -315,8 +315,8 @@ const renderers = {
     ${sectionHead('Images', 'Upload site-visit photo evidence and review what has been submitted.')}
 
     <div class="tabs" id="imagesTabs">
-      <button class="tab-btn active" data-tab="uploadImage" type="button">Upload Image</button>
-      <button class="tab-btn" data-tab="getUploadImages" type="button">Get Upload Images</button>
+      <button class="tab-btn active" data-tab="uploadImage" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span>Upload Image</span></button>
+      <button class="tab-btn" data-tab="getUploadImages" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg><span>Get Upload Images</span></button>
     </div>
 
     <div class="tab-panel" id="tab-uploadImage">
@@ -324,7 +324,7 @@ const renderers = {
         <div class="image-tile" style="margin-bottom:14px;"><div class="ph" style="height:160px;">🖼</div></div>
         <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" style="display:none;">
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-outline" id="pickImgBtn" style="flex:1;">Pick Image</button>
+          <button class="btn btn-outline btn-with-icon" id="pickImgBtn" style="flex:1; justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 012-2h2l1.5-2h7L17 6h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Pick Image</span></button>
         </div>
         <div class="field" style="margin-top:14px;">
           <label>Comment <span style="color:var(--amber);">*</span></label>
@@ -333,7 +333,7 @@ const renderers = {
             <span id="imageCommentCount" style="font-size:11px; color:var(--ink-500);">0 / 500</span>
           </div>
         </div>
-        <button class="btn btn-primary" id="uploadImgBtn" style="width:100%;" disabled>Upload</button>
+        <button class="btn btn-primary btn-with-icon" id="uploadImgBtn" style="width:100%; justify-content:center;" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span id="uploadImgLabel">Upload</span></button>
         <div class="error-text" id="imageUploadError"></div>
         <p style="color:var(--ink-500); font-size:11.5px; margin-top:8px;">
           Accepted formats: JPG, JPEG, PNG only. Size must be between 10 KB and 2 MB. Comment must be 3-500 characters.
@@ -352,45 +352,45 @@ const renderers = {
     ${sectionHead('Security Data', 'Register new accounts and review everyone already registered.')}
 
     <div class="tabs" id="securityDataTabs">
-      <button class="tab-btn active" data-tab="addSecurity" type="button">Add Security</button>
-      <button class="tab-btn" data-tab="securityInfo" type="button">Security Information</button>
+      <button class="tab-btn active" data-tab="addSecurity" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M16 11h6"/></svg><span>Add Security</span></button>
+      <button class="tab-btn" data-tab="securityInfo" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M7 12h10M10 18h4"/></svg><span>Security Information</span></button>
     </div>
 
     <div class="tab-panel" id="tab-addSecurity">
       <div class="two-col with-or">
         <div class="card">
-          <div class="card-title">New account</div>
+          <div class="card-title title-with-badge"><span class="title-badge tone-amber"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>New account</span></div>
           <form id="addGuardForm" novalidate>
             <div class="form-grid">
-              <div class="field"><label>Full name</label><input required name="first_name" maxlength="50" autocomplete="off" /><div class="error-text field-error" data-for="first_name"></div></div>
-              <div class="field"><label>Roll No</label><input required name="roll_no" maxlength="20" autocomplete="off" /><div class="error-text field-error" data-for="roll_no"></div></div>
-              <div class="field"><label>Password</label><input required type="text" name="password" maxlength="64" autocomplete="off" /><div class="error-text field-error" data-for="password"></div></div>
+              <div class="field"><label>Full name</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input required name="first_name" maxlength="50" placeholder="Enter full name" autocomplete="off" /></div><div class="error-text field-error" data-for="first_name"></div></div>
+              <div class="field"><label>Roll No</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14M5 15h14M10 3L8 21M16 3l-2 18"/></svg><input required name="roll_no" maxlength="20" placeholder="Enter Roll No" autocomplete="off" /></div><div class="error-text field-error" data-for="roll_no"></div></div>
+              <div class="field"><label>Password</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input required type="password" name="password" maxlength="64" placeholder="Enter password" autocomplete="new-password" /><button type="button" class="pw-toggle" id="newGuardPwToggle" aria-label="Show password" title="Show / hide password"><svg class="eye-on" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" style="display:none" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.2M6.6 6.6A17 17 0 002 12s3.6 7 10 7a10.6 10.6 0 004.4-.9"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg></button></div><div class="error-text field-error" data-for="password"></div></div>
               <div class="field">
                 <label>Role</label>
-                <select name="role" required>
+                <div class="input-icon has-chev"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/></svg><select name="role" required>
                   <option value="security" selected>Security Guard</option>
                   <option value="admin">Admin</option>
-                </select>
+                </select><span class="chev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></div>
                 <div class="error-text field-error" data-for="role"></div>
               </div>
-              <div class="field"><label>Mobile</label><input required name="mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number" autocomplete="off" /><div class="error-text field-error" data-for="mobile"></div></div>
+              <div class="field"><label>Mobile</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><input required name="mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number" autocomplete="off" /></div><div class="error-text field-error" data-for="mobile"></div></div>
               <div class="field">
                 <label>Gender</label>
-                <select name="gender" required>
+                <div class="input-icon has-chev"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M9 12v8M6 17h6"/><path d="M15 4h5v5M20 4l-5 5"/></svg><select name="gender" required>
                   <option value="" selected disabled>Select gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
-                </select>
+                </select><span class="chev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></div>
                 <div class="error-text field-error" data-for="gender"></div>
               </div>
-              <div class="field" style="grid-column: 1 / -1;"><label>Designation</label><input required name="designation" maxlength="50" placeholder="Security Guard" autocomplete="off" /><div class="error-text field-error" data-for="designation"></div></div>
+              <div class="field" style="grid-column: 1 / -1;"><label>Designation</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M3 13h18"/></svg><input required name="designation" maxlength="50" placeholder="Security Guard" autocomplete="off" /></div><div class="error-text field-error" data-for="designation"></div></div>
               <div class="field" style="grid-column: 1 / -1;">
                 <label>Profile Pic <span style="color:var(--ink-500); font-weight:400;">(optional)</span></label>
                 <div style="display:flex; align-items:center; gap:12px;">
                   <div class="avatar" id="newGuardAvatarPreview" style="width:48px; height:48px; font-size:18px; flex-shrink:0;">＋</div>
                   <input type="file" id="newGuardPicInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" style="display:none;">
-                  <button type="button" class="btn btn-outline" id="newGuardPicBtn" style="width:auto; padding:8px 16px;">Choose Photo</button>
+                  <button type="button" class="btn btn-outline btn-with-icon" id="newGuardPicBtn" style="width:auto; padding:8px 16px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 012-2h2l1.5-2h7L17 6h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Choose Photo</span></button>
                   <span style="color:var(--ink-500); font-size:11.5px;">JPG or PNG, max 2 MB</span>
                 </div>
                 <div class="error-text" id="newGuardPicError"></div>
@@ -398,22 +398,25 @@ const renderers = {
             </div>
             <div class="error-text" id="addGuardError" style="margin-bottom:10px;"></div>
             <div id="addGuardSuccess" style="color:var(--success); font-size:13px; margin-bottom:10px;"></div>
-            <button class="btn btn-primary" style="width:auto; padding:10px 22px;" type="submit">Add Account</button>
+            <button class="btn btn-primary btn-with-icon" style="width:auto; padding:10px 22px;" type="submit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M16 11h6"/></svg><span>Add Account</span></button>
           </form>
         </div>
         <div class="or-divider" aria-hidden="true"><span>OR</span></div>
         <div class="card">
-          <div class="card-title">Bulk upload (CSV)</div>
+          <div class="card-title title-with-badge"><span class="title-badge tone-teal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><span>Bulk upload (CSV)</span></div>
           <p style="color:var(--ink-500); font-size:12.5px; margin-bottom:4px;">
             Columns: <code>roll_no, password, first_name, gender, designation, mobile, role</code> — role must be
             <code>admin</code> or <code>security</code>; gender must be <code>Male</code>, <code>Female</code> or
-            <code>Other</code> (may be left blank). First row must be the header row.
+            <code>Other</code> (capital first letter; may be left blank); mobile must be 10 digits starting with 6-9;
+            password needs 7+ characters with an uppercase letter, a number and a special character. First row must be the header row.
           </p>
           <div class="bulk-upload-box">
             <div class="row">
-              <button class="btn btn-outline" id="downloadTemplateBtn" type="button">Download CSV Template</button>
-              <input type="file" id="csvFileInput" accept=".csv,text/csv" />
-              <button class="btn btn-primary" id="uploadCsvBtn" type="button" style="width:auto; padding:10px 18px;" disabled>Upload CSV</button>
+              <button class="btn btn-outline btn-with-icon" id="downloadTemplateBtn" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Download CSV Template</span></button>
+              <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;" /><button class="btn btn-outline btn-with-icon" id="chooseCsvBtn" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.5l-8.5 8.5a5.5 5.5 0 01-7.8-7.8l9-9a3.7 3.7 0 015.2 5.2l-9 9a1.8 1.8 0 01-2.6-2.6l8.3-8.3"/></svg><span>Choose File</span></button><span class="csv-file-name" id="csvFileName">No file chosen</span>
+            </div>
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btn-primary btn-with-icon" id="uploadCsvBtn" type="button" style="width:auto; padding:10px 18px;" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span>Upload CSV</span></button>
             </div>
             <div id="bulkUploadStatus" style="margin-top:10px; font-size:12.5px; color:var(--ink-500);"></div>
             <div id="bulkResultList" class="bulk-result-list"></div>
@@ -458,17 +461,17 @@ const renderers = {
     ${sectionHead('Duty Places', 'Add the places guards are assigned to. Each duty place has its own QR code.')}
 
     <div class="tabs" id="dutyPlaceTabs">
-      <button class="tab-btn active" data-tab="newPlace" type="button">Add Duty Place</button>
-      <button class="tab-btn" data-tab="existingPlaces" type="button">Existing Duty Places</button>
-      <button class="tab-btn" data-tab="generateQr" type="button">Generate QR Code</button>
+      <button class="tab-btn active" data-tab="newPlace" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg><span>Add Duty Place</span></button>
+      <button class="tab-btn" data-tab="existingPlaces" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Existing Duty Places</span></button>
+      <button class="tab-btn" data-tab="generateQr" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg><span>Generate QR Code</span></button>
     </div>
 
     <div class="tab-panel" id="tab-newPlace">
       <div class="card" style="max-width:520px;">
-        <div class="card-title">Add Duty Place</div>
-        <div class="field"><label>Duty place</label><input id="dutyPlaceNameInput" placeholder="e.g. North Gate" /></div>
+        <div class="card-title title-with-badge"><span class="title-badge tone-amber"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span><span>Add Duty Place</span></div>
+        <div class="field"><label>Duty place</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg><input id="dutyPlaceNameInput" placeholder="e.g. North Gate" /></div></div>
         <div class="error-text" id="newPlaceError"></div>
-        <button class="btn btn-primary" id="saveDutyPlaceBtn" style="width:auto; padding:10px 22px;">Add Duty Place</button>
+        <button class="btn btn-primary btn-with-icon" id="saveDutyPlaceBtn" style="width:auto; padding:10px 22px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l4 4v12a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/></svg><span>Add Duty Place</span></button>
       </div>
     </div>
 
@@ -476,7 +479,7 @@ const renderers = {
       <div class="card">
         <div class="data-toolbar">
           <div class="search-field">
-            <input type="text" id="dutyPlaceSearchInput" placeholder="Search duty places..." />
+            <input type="text" id="dutyPlaceSearchInput" class="has-search-icon" placeholder="Search duty places..." />
           </div>
           <div class="toolbar-right">
             <div class="page-size-field">
@@ -488,7 +491,7 @@ const renderers = {
                 <option value="100">100</option>
               </select>
             </div>
-            <button class="btn btn-outline" id="downloadDutyPlacesBtn" type="button">⬇ Download Excel</button>
+            <button class="btn btn-outline btn-with-icon" id="downloadDutyPlacesBtn" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Download Excel</span></button>
           </div>
         </div>
         <div id="dutyPlacesTableWrap"><p style="color:var(--ink-500); font-size:13px;"><span class="spinner" role="status" aria-label="Loading"></span><span class="loader-text">Loading...</span></p></div>
@@ -504,18 +507,18 @@ const renderers = {
 
     <div class="tab-panel" id="tab-generateQr" style="display:none;">
       <div class="card" style="max-width:480px;">
-        <div class="card-title">Generate a QR code for a duty place</div>
+        <div class="card-title title-with-badge"><span class="title-badge tone-teal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg></span><span>Generate a QR code for a duty place</span></div>
         <div class="field" style="margin-bottom:0;">
           <label>Duty place</label>
-          <select id="qrPlaceSelect"><option value="">Select a duty place</option></select>
+          <div class="input-icon has-chev"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg><select id="qrPlaceSelect"><option value="">Select a duty place</option></select><span class="chev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></div>
         </div>
         <div class="error-text" id="qrGenerateError"></div>
       </div>
 
       <div class="card" id="qrPreviewCard" style="max-width:420px; display:none; text-align:center;">
-        <div class="card-title" style="text-align:left;">Preview</div>
+        <div class="card-title title-with-badge" style="text-align:left;"><span class="title-badge tone-teal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Preview</span></div>
         <div id="qrPreviewWrap" style="display:flex; flex-direction:column; align-items:center; gap:10px;"></div>
-        <button class="btn btn-primary" id="downloadQrPdfBtn" type="button" style="width:auto; padding:10px 22px; margin-top:18px;" disabled>⬇ Download as PDF</button>
+        <button class="btn btn-primary btn-with-icon" id="downloadQrPdfBtn" type="button" style="width:auto; padding:10px 22px; margin-top:18px;" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Download as PDF</span></button>
       </div>
     </div>
   `,
@@ -552,26 +555,26 @@ const renderers = {
 
       <div class="assign-board">
         <div class="card assign-col">
-          <div class="card-title">Guards</div>
-          <input type="text" id="assignGuardsSearch" class="mini-search" placeholder="Search guards..." />
+          <div class="card-title title-with-badge"><span class="title-badge tone-amber"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span><span>Guards</span></div>
+          <input type="text" id="assignGuardsSearch" class="mini-search has-search-icon" placeholder="Search guards..." />
           <div class="assign-hint">Drag a guard into the Duty Assignments column</div>
           <div id="assignGuardsList" class="assign-list"><p style="color:var(--ink-500); font-size:13px;">Loading...</p></div>
         </div>
         <div class="card assign-col">
-          <div class="card-title">Duty Places</div>
-          <input type="text" id="assignPlacesSearch" class="mini-search" placeholder="Search duty places..." />
+          <div class="card-title title-with-badge"><span class="title-badge tone-purple"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span><span>Duty Places</span></div>
+          <input type="text" id="assignPlacesSearch" class="mini-search has-search-icon" placeholder="Search duty places..." />
           <div class="assign-hint">Drag a place onto a guard's card in the Duty Assignments column</div>
           <div id="assignPlacesList" class="assign-list"><p style="color:var(--ink-500); font-size:13px;">Loading...</p></div>
         </div>
         <div class="card assign-col">
-          <div class="card-title">Duty Assignments</div>
+          <div class="card-title title-with-badge"><span class="title-badge tone-green"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 14l2 2 4-4"/></svg></span><span>Duty Assignments</span></div>
           <div class="assign-hint">Drop a guard here, then drop one or more duty places onto the guard's card. Pick a duty date above to see what's already assigned for that day.</div>
           <div id="assignDropZone" class="assign-list assign-dropzone"></div>
         </div>
       </div>
 
       <div class="card" style="margin-top:16px;">
-        <button class="btn btn-outline" id="previewAssignBtn" type="button" style="width:auto; padding:10px 22px;">Show Preview</button>
+        <button class="btn btn-outline btn-with-icon" id="previewAssignBtn" type="button" style="width:auto; padding:10px 22px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Show Preview</span></button>
         <div id="assignPreviewWrap"></div>
       </div>
     </div>
@@ -670,7 +673,7 @@ const renderers = {
     <div class="card" style="max-width:420px; text-align:center;">
       <div class="avatar" id="profileAvatar" style="width:80px; height:80px; font-size:28px; margin:0 auto 16px;">${escapeHtml(user.first_name.charAt(0))}</div>
       <input type="file" id="profilePicInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" style="display:none;">
-      <button class="btn btn-outline" id="changePhotoBtn" style="width:auto; padding:8px 18px; margin-bottom:6px;">Change Photo</button>
+      <button class="btn btn-outline btn-with-icon" id="changePhotoBtn" style="width:auto; padding:8px 18px; margin-bottom:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 012-2h2l1.5-2h7L17 6h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Change Photo</span></button>
       <div class="error-text" id="profilePicError"></div>
       <p style="color:var(--ink-500); font-size:11.5px; margin-bottom:18px;">JPG or PNG only, max 2 MB.</p>
       <table style="text-align:left;">
@@ -694,8 +697,8 @@ renderers.account = () => {
   return `
     ${sectionHead('Personal Data', 'Your profile details and password.')}
     <div class="tabs" id="accountTabs">
-      <button class="tab-btn active" data-tab="accProfile" type="button">Profile</button>
-      <button class="tab-btn" data-tab="accPassword" type="button">Change Password</button>
+      <button class="tab-btn active" data-tab="accProfile" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+      <button class="tab-btn" data-tab="accPassword" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg><span>Change Password</span></button>
     </div>
     <div class="tab-panel" id="tab-accProfile">${strip(renderers.profile())}</div>
     <div class="tab-panel" id="tab-accPassword" style="display:none;">${strip(renderers.changePassword())}</div>
@@ -1010,11 +1013,11 @@ function attachHandlers(section) {
     document.getElementById('downloadRecentScansPdfBtn').addEventListener('click', () => {
       const filtered = recentScansState.rows.filter(matchesRecentScansFilters);
       if (!filtered.length) {
-        alert('Nothing to export for this date/search/filter.');
+        showNotice('There is nothing to export for this date, search or filter.', { type: 'info', title: 'Nothing to export' });
         return;
       }
       if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-        alert('The PDF export library did not load. Check your internet connection and try again.');
+        showNotice('The PDF export library did not load. Check your internet connection and try again.', { type: 'error', title: 'Export unavailable' });
         return;
       }
 
@@ -1220,7 +1223,7 @@ function attachHandlers(section) {
       errBox.textContent = '';
       uploadBtn.disabled = true;
       pickBtn.disabled = true;
-      uploadBtn.textContent = 'Uploading...';
+      document.getElementById('uploadImgLabel').textContent = 'Uploading...';
       try {
         await uploadImageViaApi({
           file: selectedFile,
@@ -1228,7 +1231,7 @@ function attachHandlers(section) {
           guardEmpId: user.roll_no,
           guardName: user.first_name,
         });
-        alert('Image uploaded successfully.');
+        showNotice('Your photo was uploaded successfully.', { title: 'Image uploaded' });
         resetSelection();
         commentInput.value = '';
         updateCommentCount();
@@ -1236,7 +1239,7 @@ function attachHandlers(section) {
         errBox.textContent = err.message || 'Could not upload the image.';
         refreshUploadButton();
       } finally {
-        uploadBtn.textContent = 'Upload';
+        document.getElementById('uploadImgLabel').textContent = 'Upload';
         pickBtn.disabled = false;
       }
     });
@@ -1543,6 +1546,17 @@ function attachHandlers(section) {
 
     newGuardPicBtn.addEventListener('click', () => newGuardPicInput.click());
 
+    // Show / hide the password typed into the New account form.
+    const pwToggle = document.getElementById('newGuardPwToggle');
+    pwToggle.addEventListener('click', () => {
+      const pwInput = document.querySelector('#addGuardForm [name="password"]');
+      const show = pwInput.type === 'password';
+      pwInput.type = show ? 'text' : 'password';
+      pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      pwToggle.querySelector('.eye-on').style.display = show ? 'none' : '';
+      pwToggle.querySelector('.eye-off').style.display = show ? '' : 'none';
+    });
+
     newGuardPicInput.addEventListener('change', () => {
       newGuardPicError.textContent = '';
       const file = newGuardPicInput.files && newGuardPicInput.files[0];
@@ -1703,12 +1717,17 @@ function attachHandlers(section) {
           }
         }
 
+        const photoWarning = errBox.textContent;
         errBox.textContent = '';
-        const okBox = document.getElementById('addGuardSuccess');
-        if (okBox) okBox.textContent = `Account created for ${saved.first_name} (${saved.roll_no}).`;
         e.target.reset();
         showAddGuardErrors({});
         resetNewGuardPic();
+        const roleLabel = payload.role === 'admin' ? 'Admin' : 'Security Guard';
+        showNotice(
+          `${saved.first_name} (Roll No: ${saved.roll_no}) has been registered as ${roleLabel === 'Admin' ? 'an' : 'a'} ${roleLabel} and can now log in with the password you set.` +
+            (photoWarning ? ` Note: the profile photo could not be uploaded. You can add it later from Security Information.` : ''),
+          { title: 'Account created', type: photoWarning ? 'info' : 'success' }
+        );
       } catch (err) {
         errBox.textContent = err.message;
       } finally {
@@ -1720,6 +1739,8 @@ function attachHandlers(section) {
     document.getElementById('downloadTemplateBtn').addEventListener('click', downloadCsvTemplate);
 
     const fileInput = document.getElementById('csvFileInput');
+    const csvFileName = document.getElementById('csvFileName');
+    document.getElementById('chooseCsvBtn').addEventListener('click', () => fileInput.click());
     const uploadBtn = document.getElementById('uploadCsvBtn');
     const statusBox = document.getElementById('bulkUploadStatus');
     const resultList = document.getElementById('bulkResultList');
@@ -1727,6 +1748,7 @@ function attachHandlers(section) {
 
     fileInput.addEventListener('change', (e) => {
       selectedFile = e.target.files[0] || null;
+      csvFileName.textContent = selectedFile ? selectedFile.name : 'No file chosen';
       uploadBtn.disabled = !selectedFile;
       statusBox.textContent = selectedFile ? `Selected: ${selectedFile.name}` : '';
       resultList.innerHTML = '';
@@ -1746,12 +1768,30 @@ function attachHandlers(section) {
             statusBox.textContent = 'No data rows found in that file.';
             return;
           }
-          statusBox.textContent = `Uploading ${rows.length} row(s)...`;
-          const result = await bulkAddUsersViaApi(rows);
-          statusBox.innerHTML = `<span class="badge badge-success">${result.insertedCount} added</span> &nbsp; <span class="badge ${result.skippedCount ? 'badge-danger' : 'badge-amber'}">${result.skippedCount} skipped</span>`;
-          const skipped = result.results.filter(r => r.status === 'skipped');
+          const missing = CSV_HEADERS.filter(h => !(h in rows[0]));
+          if (missing.length) {
+            statusBox.innerHTML = `<span style="color:var(--danger);">Missing column(s) in the header row: ${escapeHtml(missing.join(', '))}. Download the CSV template to see the expected columns.</span>`;
+            return;
+          }
+          // Check every row first (password strength, gender, mobile, role, ...).
+          // Rows that fail are listed with the reason; the valid ones are still uploaded.
+          const { valid, invalid } = validateBulkRows(rows);
+          const skipped = invalid.map(r => ({ row: r.line, roll_no: r.roll_no, reason: r.reason }));
+          let insertedCount = 0;
+          if (valid.length) {
+            statusBox.textContent = `Uploading ${valid.length} valid row(s)...`;
+            const result = await bulkAddUsersViaApi(valid.map(v => v.row));
+            insertedCount = result.insertedCount;
+            result.results.filter(r => r.status === 'skipped').forEach(r => {
+              // server row numbers are relative to what we sent - map back to the file's line
+              const orig = valid[r.row - 2];
+              skipped.push({ row: orig ? orig.line : r.row, roll_no: r.roll_no, reason: r.reason });
+            });
+          }
+          skipped.sort((a, b) => a.row - b.row);
+          statusBox.innerHTML = `<span class="badge badge-success">${insertedCount} added</span> &nbsp; <span class="badge ${skipped.length ? 'badge-danger' : 'badge-amber'}">${skipped.length} skipped</span>`;
           resultList.innerHTML = skipped.length
-            ? skipped.map(r => `<div class="row-item"><span>Row ${r.row} (${r.roll_no || '—'})</span><span style="color:var(--danger);">${escapeHtml(r.reason)}</span></div>`).join('')
+            ? skipped.map(r => `<div class="row-item"><span>Row ${r.row} (${escapeHtml(r.roll_no || '—')})</span><span style="color:var(--danger);">${escapeHtml(r.reason)}</span></div>`).join('')
             : '<div style="color:var(--ink-500); padding:6px 0;">No rows skipped.</div>';
         } catch (err) {
           statusBox.innerHTML = `<span style="color:var(--danger);">${escapeHtml(err.message)}</span>`;
@@ -1840,24 +1880,24 @@ function attachHandlers(section) {
         btn.addEventListener('click', async () => {
           const u = currentRows.find(r => r._id === btn.dataset.id);
           const verb = u && u.blocked ? 'unblock' : 'block';
-          if (!confirm(`Are you sure you want to ${verb} ${u ? u.first_name : 'this account'}?`)) return;
+          if (!(await showConfirm(`Are you sure you want to ${verb} ${u ? u.first_name : 'this account'}?`, { title: verb === 'block' ? 'Block account?' : 'Unblock account?', confirmText: verb === 'block' ? 'Block' : 'Unblock', danger: verb === 'block' }))) return;
           try {
             await toggleBlockUserViaApi(btn.dataset.id);
             load();
           } catch (err) {
-            alert(err.message);
+            showNotice(err.message, { type: 'error' });
           }
         });
       });
       document.querySelectorAll('#tab-securityInfo .delete-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const u = currentRows.find(r => r._id === btn.dataset.id);
-          if (!confirm(`Delete ${u ? u.first_name : 'this account'} (${u ? u.roll_no : ''})? This cannot be undone.`)) return;
+          if (!(await showConfirm(`Delete ${u ? u.first_name : 'this account'} (${u ? u.roll_no : ''})? This cannot be undone.`, { title: 'Delete account?', confirmText: 'Delete', danger: true }))) return;
           try {
             await deleteUserViaApi(btn.dataset.id);
             load();
           } catch (err) {
-            alert(err.message);
+            showNotice(err.message, { type: 'error' });
           }
         });
       });
@@ -2072,7 +2112,7 @@ function attachHandlers(section) {
         }));
         exportRowsToExcel(rows, { filename: `security_data_${Date.now()}.xlsx`, sheetName: 'Security Data' });
       } catch (err) {
-        alert('Could not export: ' + err.message);
+        showNotice(err.message, { type: 'error', title: 'Could not export' });
       } finally {
         btn.disabled = false;
         btn.textContent = originalLabel;
@@ -2088,7 +2128,7 @@ function attachHandlers(section) {
         const res = await fetchUsersViaApi({ search: state.search, page: 1, limit: 10000 });
         await exportSecurityDataToPdf(res.data, { filename: `security_data_${Date.now()}.pdf` });
       } catch (err) {
-        alert('Could not export: ' + err.message);
+        showNotice(err.message, { type: 'error', title: 'Could not export' });
       } finally {
         btn.disabled = false;
         btn.textContent = originalLabel;
@@ -2127,7 +2167,7 @@ function attachHandlers(section) {
       try {
         await addDutyPlaceViaApi({ place: name });
         nameInput.value = '';
-        alert(`Duty place "${name}" added.`);
+        showNotice(`"${name}" has been added to your duty places. You can now generate its QR code.`, { title: 'Duty place added' });
       } catch (err) {
         errBox.textContent = err.message;
       } finally {
@@ -2195,12 +2235,12 @@ function attachHandlers(section) {
       document.querySelectorAll('.delete-place-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const p = currentPlaces.find(r => r._id === btn.dataset.id);
-          if (!confirm(`Delete "${p ? p.place : 'this duty place'}"? This cannot be undone.`)) return;
+          if (!(await showConfirm(`Delete "${p ? p.place : 'this duty place'}"? This cannot be undone.`, { title: 'Delete duty place?', confirmText: 'Delete', danger: true }))) return;
           try {
             await deleteDutyPlaceViaApi(btn.dataset.id);
             loadExistingPlaces();
           } catch (err) {
-            alert(err.message);
+            showNotice(err.message, { type: 'error' });
           }
         });
       });
@@ -2255,7 +2295,7 @@ function attachHandlers(section) {
 
     document.getElementById('downloadDutyPlacesBtn').addEventListener('click', async () => {
       const btn = document.getElementById('downloadDutyPlacesBtn');
-      const originalLabel = btn.textContent;
+      const originalLabel = btn.innerHTML;
       btn.disabled = true;
       btn.textContent = 'Preparing...';
       try {
@@ -2263,10 +2303,10 @@ function attachHandlers(section) {
         const rows = res.data.map(p => ({ 'Duty Place': p.place, 'Added On': formatDateTime(p.createdAt) }));
         exportRowsToExcel(rows, { filename: `duty_places_${Date.now()}.xlsx`, sheetName: 'Duty Places' });
       } catch (err) {
-        alert('Could not export: ' + err.message);
+        showNotice(err.message, { type: 'error', title: 'Could not export' });
       } finally {
         btn.disabled = false;
-        btn.textContent = originalLabel;
+        btn.innerHTML = originalLabel;
       }
     });
 
@@ -2448,7 +2488,7 @@ function attachHandlers(section) {
         try {
           const saved = await saveScanTimeViaApi(type, from, to);
           showCurrentWindow(key, saved.from, saved.to);
-          alert(`${key} Duty scan time window saved.`);
+          showNotice(`The ${key} Duty scan time window has been saved.`, { title: 'Scan time saved' });
         } catch (err) {
           errBox.textContent = err.message || 'Could not save the scan time window.';
         } finally {
@@ -2466,6 +2506,8 @@ function attachHandlers(section) {
     let rawExistingForDate = [];     // every duty (Day + Night) saved for the picked date
     let existingDutiesForDate = [];  // ...only those of the chosen duty type
     let assignDutyType = 'Day Duty';  // 'Day Duty' | 'Night Duty' (defaults to Day)
+    // 'day' | 'night' - tints popups on this page with the Day / Night duty colour.
+    const dutyAccent = () => (assignDutyType === 'Night Duty' ? 'night' : 'day');
     const dutyTypeOf = (d) => d.dutyType || 'Night Duty'; // old duties without a type are Night
     // New, not yet submitted. One card per guard; a guard can hold many duty places.
     // { clientId, guardId, guardEmpId, guardName, dutyPlaces: [placeText, ...] }
@@ -2642,7 +2684,7 @@ function attachHandlers(section) {
         rawExistingForDate = res.data;
       } catch (err) {
         rawExistingForDate = [];
-        alert(`Could not check existing duties for that date: ${err.message}`);
+        showNotice(err.message, { type: 'error', title: 'Could not check existing duties', accent: dutyAccent() });
       }
       applyExistingFilter();
       renderDropZone();
@@ -2655,10 +2697,10 @@ function attachHandlers(section) {
       loadExistingDutiesForDate(e.target.value);
     });
 
-    document.getElementById('assignDutyType').addEventListener('change', (e) => {
+    document.getElementById('assignDutyType').addEventListener('change', async (e) => {
       const next = e.target.value;
       if (pendingDuties.length && next !== assignDutyType &&
-          !confirm('Changing the duty type will clear the guard cards you have built so far. Continue?')) {
+          !(await showConfirm('Changing the duty type will clear the guard cards you have built so far. Continue?', { title: 'Change duty type?', confirmText: 'Continue' }))) {
         e.target.value = assignDutyType;
         return;
       }
@@ -2687,13 +2729,13 @@ function attachHandlers(section) {
     function addGuardCard(guardId) {
       const guard = guardsData.find(g => g._id === guardId);
       if (!guard) return;
-      if (!assignDutyType) { alert('Select a duty type (Day Duty or Night Duty) first.'); return; }
+      if (!assignDutyType) { showNotice('Select a duty type (Day Duty or Night Duty) first.', { type: 'info', title: 'Action needed', accent: dutyAccent() }); return; }
       if (pendingDuties.some(d => d.guardEmpId === guard.roll_no)) {
-        alert(`${guard.first_name} already has a duty in this batch. Add more places to that card instead.`);
+        showNotice(`${guard.first_name} already has a duty in this batch. Add more places to that card instead.`, { type: 'info', title: 'Action needed', accent: dutyAccent() });
         return;
       }
       if (existingDutiesForDate.some(d => d.guardEmpId === guard.roll_no)) {
-        alert(`${guard.first_name} already has a ${assignDutyType} assigned for this date.`);
+        showNotice(`${guard.first_name} already has a ${assignDutyType} assigned for this date.`, { type: 'info', title: 'Action needed', accent: dutyAccent() });
         return;
       }
       pendingDuties.push({
@@ -2713,7 +2755,7 @@ function attachHandlers(section) {
       const target = pendingDuties.find(d => d.clientId === clientId);
       if (!place || !target) return;
       if (usedPlaceKeys().has(place.place.toLowerCase())) {
-        alert(`"${place.place}" is already assigned for this date.`);
+        showNotice(`"${place.place}" is already assigned for this date.`, { type: 'info', title: 'Action needed', accent: dutyAccent() });
         return;
       }
       target.dutyPlaces.push(place.place);
@@ -2764,7 +2806,7 @@ function attachHandlers(section) {
 
       if (payload.type === 'place') {
         if (pendingDuties.length === 0) {
-          alert('Drag a guard into the Duty Assignments column first, then drop duty places onto the guard\'s card.');
+          showNotice('Drag a guard into the Duty Assignments column first, then drop duty places onto the guard\'s card.', { type: 'info', title: 'Action needed', accent: dutyAccent() });
           return;
         }
         // Dropped on a specific card -> that card; anywhere else -> the latest card.
@@ -2795,19 +2837,23 @@ function attachHandlers(section) {
     document.getElementById('previewAssignBtn').addEventListener('click', () => {
       const dutyDate = document.getElementById('assignDutyDate').value;
 
-      if (!assignDutyType) { alert('Select a duty type first.'); return; }
-      if (!dutyDate) { alert('Pick a duty date first.'); return; }
-      if (dutyDate < todayISODate()) { alert('Duty date cannot be in the past. Please choose today or a later date.'); return; }
+      if (!assignDutyType) { showNotice('Select a duty type first.', { type: 'info', title: 'Action needed', accent: dutyAccent() }); return; }
+      if (!dutyDate) { showNotice('Pick a duty date first.', { type: 'info', title: 'Action needed', accent: dutyAccent() }); return; }
+      if (dutyDate < todayISODate()) { showNotice('Duty date cannot be in the past. Please choose today or a later date.', { type: 'info', title: 'Action needed', accent: dutyAccent() }); return; }
       if (pendingDuties.length === 0 && existingDutiesForDate.length === 0) {
-        alert('Drag at least one guard (and some duty places) into the Duty Assignments column first.');
+        showNotice('Drag at least one guard (and some duty places) into the Duty Assignments column first.', { type: 'info', title: 'Action needed', accent: dutyAccent() });
         return;
       }
       const incomplete = pendingDuties.filter(d => d.dutyPlaces.length === 0);
-      if (incomplete.length > 0) { alert(`${incomplete.length} guard card(s) still need at least one duty place dropped onto them before you can preview.`); return; }
+      if (incomplete.length > 0) { showNotice(`${incomplete.length} guard card(s) still need at least one duty place dropped onto them before you can preview.`, { type: 'info', title: 'Action needed', accent: dutyAccent() }); return; }
 
+      const themeCls = assignDutyType === 'Night Duty' ? 'is-night' : 'is-day';
+      const themeIcon = assignDutyType === 'Night Duty'
+        ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
       openModal(`
-        <div>
-          <div class="card-title" style="margin-bottom:10px;">Preview — ${pendingDuties.length} new ${assignDutyType} assignment(s) for ${assignDutyType === 'Night Duty' ? `${ddmmyyyy(dutyDate)} to ${ddmmyyyy(nextDayISO(dutyDate))}` : ddmmyyyy(dutyDate)}${existingDutiesForDate.length ? ` (${existingDutiesForDate.length} already assigned)` : ''}</div>
+        <div class="duty-themed ${themeCls}">
+          <div class="card-title preview-title" style="margin-bottom:10px;"><span class="preview-title-icon">${themeIcon}</span>Preview — ${pendingDuties.length} new ${assignDutyType} assignment(s) for ${assignDutyType === 'Night Duty' ? `${ddmmyyyy(dutyDate)} to ${ddmmyyyy(nextDayISO(dutyDate))}` : ddmmyyyy(dutyDate)}${existingDutiesForDate.length ? ` (${existingDutiesForDate.length} already assigned)` : ''}</div>
           <div class="table-scroll">
             <table>
               <thead><tr><th>#</th><th>Guard</th><th>Duty Places</th><th>Status</th></tr></thead>
@@ -2870,9 +2916,9 @@ function attachHandlers(section) {
           });
           if (res.skippedCount > 0) {
             const reasons = res.results.filter(r => r.status === 'skipped').map(r => `${r.guardName || 'Row'}: ${r.reason}`).join('\n');
-            alert(`${res.insertedCount} duty assignment(s) saved.\n${res.skippedCount} skipped:\n${reasons}`);
+            showNotice(`${res.insertedCount} duty assignment(s) saved.\n${res.skippedCount} skipped:\n${reasons}`, { title: 'Duties assigned', type: 'info', accent: assignDutyType === 'Night Duty' ? 'night' : 'day' });
           } else {
-            alert(`${res.insertedCount} duty assignment(s) saved.`);
+            showNotice(`${res.insertedCount} duty assignment(s) have been saved.`, { title: 'Duties assigned', accent: assignDutyType === 'Night Duty' ? 'night' : 'day' });
           }
           pendingDuties = [];
           closeModal();
@@ -2958,12 +3004,12 @@ function attachHandlers(section) {
       document.querySelectorAll('#tab-showAssigned .delete-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', async () => {
           const a = currentAssignments.find(r => r._id === btn.dataset.id);
-          if (!confirm(`Remove ${a ? a.guardName : 'this guard'}'s duty${a && a.dutyPlaces ? ` at "${a.dutyPlaces.join(', ')}"` : ''}? This cannot be undone.`)) return;
+          if (!(await showConfirm(`Remove ${a ? a.guardName : 'this guard'}'s duty${a && a.dutyPlaces ? ` at "${a.dutyPlaces.join(', ')}"` : ''}? This cannot be undone.`, { title: 'Remove duty?', confirmText: 'Remove', danger: true }))) return;
           try {
             await deleteDutyAssignmentViaApi(btn.dataset.id);
             loadAssignedDuties();
           } catch (err) {
-            alert(err.message);
+            showNotice(err.message, { type: 'error' });
           }
         });
       });
@@ -3125,7 +3171,7 @@ function attachHandlers(section) {
           { filename: `assigned_duties_${Date.now()}.pdf`, title: 'Assigned Duties' }
         );
       } catch (err) {
-        alert('Could not export: ' + err.message);
+        showNotice(err.message, { type: 'error', title: 'Could not export' });
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
@@ -3201,7 +3247,7 @@ function attachHandlers(section) {
     async function uploadProfilePic(file) {
       errBox.textContent = '';
       changeBtn.disabled = true;
-      const originalLabel = changeBtn.textContent;
+      const originalLabel = changeBtn.innerHTML;
       changeBtn.textContent = 'Uploading...';
       try {
         const { profile_pic } = await uploadProfilePicViaApi(user.roll_no, file);
@@ -3217,7 +3263,7 @@ function attachHandlers(section) {
       } finally {
         picInput.value = '';
         changeBtn.disabled = false;
-        changeBtn.textContent = originalLabel;
+        changeBtn.innerHTML = originalLabel;
       }
     }
   }

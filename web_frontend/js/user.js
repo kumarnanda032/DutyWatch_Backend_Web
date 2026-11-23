@@ -1009,7 +1009,7 @@ pdfBtn.addEventListener('click', () => {
           guardEmpId: user.roll_no,
           guardName: user.first_name,
         });
-        alert('Image uploaded successfully.');
+        showNotice('Your photo was uploaded successfully.', { title: 'Image uploaded' });
         resetSelection();
         commentInput.value = '';
         updateCommentCount();

@@ -141,3 +141,109 @@ function requireRole(role) {
   }
   return u;
 }
+
+
+/**
+ * Styled replacement for window.alert() on success messages.
+ *   showNotice('Image uploaded successfully.');
+ *   showNotice('Saved.', { title: 'Done', type: 'success' | 'error' | 'info' });
+ *   Pass accent: 'day' | 'night' to tint the popup with the Day / Night duty colour.
+ * Closes on OK, Enter, Escape or a click on the dark backdrop.
+ */
+function showNotice(message, opts) {
+  const o = opts || {};
+  const type = o.type || 'success';
+  const title = o.title || (type === 'error' ? 'Something went wrong' : type === 'info' ? 'Notice' : 'Success');
+  const icons = {
+    success: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    error: '<path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/>',
+    info: '<path d="M12 11v5M12 7.5v.01"/><circle cx="12" cy="12" r="9"/>',
+  };
+  const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '10000';
+    overlay.setAttribute('role', 'alertdialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.innerHTML = `
+      <div class="modal-box notice-box${o.accent ? ' duty-themed is-' + o.accent : ''}">
+        <div class="notice-icon notice-${type}">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[type] || icons.success}</svg>
+        </div>
+        <h3>${esc(title)}</h3>
+        <p>${esc(message)}</p>
+        <button type="button" class="btn btn-primary notice-ok">OK</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const okBtn = overlay.querySelector('.notice-ok');
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      resolve();
+    }
+    function onKey(e) {
+      if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); close(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    okBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    okBtn.focus();
+  });
+}
+
+
+/**
+ * Styled replacement for window.confirm(). Returns a Promise<boolean>.
+ *   if (!(await showConfirm('Delete "Gate 1"? This cannot be undone.',
+ *        { title: 'Delete duty place?', confirmText: 'Delete', danger: true }))) return;
+ * Escape / backdrop click / Cancel resolve false. For danger dialogs the
+ * Cancel button has the focus, so a stray Enter never deletes anything.
+ */
+function showConfirm(message, opts) {
+  const o = opts || {};
+  const danger = !!o.danger;
+  const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const icon = danger
+    ? '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/>'
+    : '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/>';
+
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '10000';
+    overlay.setAttribute('role', 'alertdialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.innerHTML = `
+      <div class="modal-box notice-box">
+        <div class="notice-icon ${danger ? 'notice-error' : 'notice-info'}">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg>
+        </div>
+        <h3>${esc(o.title || (danger ? 'Are you sure?' : 'Please confirm'))}</h3>
+        <p>${esc(message)}</p>
+        <div class="notice-actions">
+          <button type="button" class="btn btn-outline notice-cancel">${esc(o.cancelText || 'Cancel')}</button>
+          <button type="button" class="btn ${danger ? 'btn-danger-solid' : 'btn-primary'} notice-confirm">${esc(o.confirmText || 'OK')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const cancelBtn = overlay.querySelector('.notice-cancel');
+    const okBtn = overlay.querySelector('.notice-confirm');
+    function done(result) {
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      resolve(result);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    cancelBtn.addEventListener('click', () => done(false));
+    okBtn.addEventListener('click', () => done(true));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) done(false); });
+    (danger ? cancelBtn : okBtn).focus();
+  });
+}
