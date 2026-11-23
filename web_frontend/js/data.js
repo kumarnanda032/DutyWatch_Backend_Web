@@ -217,12 +217,14 @@ function showConfirm(message, opts) {
     overlay.setAttribute('role', 'alertdialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.innerHTML = `
-      <div class="modal-box notice-box">
-        <div class="notice-icon ${danger ? 'notice-error' : 'notice-info'}">
+      <div class="modal-box notice-box${o.accent ? ' duty-themed confirm-themed is-' + o.accent : ''}">
+        <div class="notice-icon ${danger && !o.accent ? 'notice-error' : 'notice-info'}">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg>
         </div>
         <h3>${esc(o.title || (danger ? 'Are you sure?' : 'Please confirm'))}</h3>
+        ${o.badge ? `<span class="confirm-badge">${esc(o.badge)}</span>` : ''}
         <p>${esc(message)}</p>
+        ${Array.isArray(o.chips) && o.chips.length ? `<div class="confirm-chips">${o.chips.map(c => `<span class="chip preserve-space">${esc(c)}</span>`).join('')}</div>` : ''}
         <div class="notice-actions">
           <button type="button" class="btn btn-outline notice-cancel">${esc(o.cancelText || 'Cancel')}</button>
           <button type="button" class="btn ${danger ? 'btn-danger-solid' : 'btn-primary'} notice-confirm">${esc(o.confirmText || 'OK')}</button>

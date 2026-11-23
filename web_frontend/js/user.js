@@ -635,7 +635,7 @@ function attachHandlers(section) {
       prevBtn.addEventListener('click', () => { dutyPage -= 1; paint('home'); });
       nextBtn.addEventListener('click', () => { dutyPage += 1; paint('home'); });
 
-pdfBtn.addEventListener('click', () => {
+pdfBtn.addEventListener('click', async () => {
         if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
           alert('The PDF export library did not load. Check your internet connection and try again.');
           return;
@@ -650,13 +650,53 @@ pdfBtn.addEventListener('click', () => {
         // glyphs and silently corrupts them if printed as text, so the icons
         // are vector lines, not characters, which is why this needs manual
         // layout instead of a plain autoTable text cell.
-        const ICON_COLUMN = 4;
         const LINE_HEIGHT = 4.6; // mm per wrapped line
         const CELL_TOP_PAD = 2.4; // mm, matches autoTable's own cell padding
         const CELL_SIDE_PAD = 2; // mm
         const ICON_GAP = 3.4; // mm reserved for icon + gap before the name
 
-        const doc = new jspdf.jsPDF({ orientation: 'landscape' });
+        const doc = new jspdf.jsPDF({ orientation: 'landscape', format: 'a4' });
+
+        // Duty type / status that are the same on every duty are printed once in the
+        // header instead of on every row; if they differ the column stays in the table.
+        const rangeOf = (d) => prettyRange(d.dateRange).replace(' \u2192 ', ' to ');
+        const typeOf = (d) => d.dutyType || 'Night Duty';
+        const statusOf = (d) => STATUS_LABEL[d.status] || d.status;
+        const allSame = (fn) => all.every(d => fn(d) === fn(all[0]));
+        const showType = !allSame(typeOf);
+        const showStatus = !allSame(statusOf);
+
+        // Columns and their widths (mm); the Duty Places column takes the leftover width
+        // of the 269 mm A4-landscape printable area.
+        const head = ['#', 'Duty Date Range'];
+        const fixedWidths = [10, 42];
+        if (showType) { head.push('Duty Type'); fixedWidths.push(28); }
+        if (showStatus) { head.push('Status'); fixedWidths.push(26); }
+        head.push('Duty Places (tick = scanned)');
+        const ICON_COLUMN = head.length - 1;
+        const subColWidth = 269 - fixedWidths.reduce((n, w) => n + w, 0);
+        const columnStyles = {};
+        fixedWidths.forEach((w, i) => { columnStyles[i] = { cellWidth: w }; });
+        columnStyles[ICON_COLUMN] = { cellWidth: subColWidth };
+
+        // ---- Aditya University header ----
+        const allSubs = all.flatMap(d => d.dutyPlaces || []);
+        const scannedCount = allSubs.filter(sp => sp.scanned).length;
+        const startY = await drawAusReportHeader(doc, {
+          title: 'My Duties Report',
+          subtitle: ['Duty', 'Watch'],
+          meta: [
+            ['Guard', `${user.first_name} (${user.roll_no})`],
+            ['Generated On', new Date().toLocaleString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })],
+            ['Total Duties', all.length],
+            ['Total Duty Places', allSubs.length],
+            ['Scanned', scannedCount],
+            ['Not Scanned', allSubs.length - scannedCount],
+            ['Duty Type', showType ? 'Day & Night' : typeOf(all[0])],
+            ['Status', showStatus ? 'Mixed' : statusOf(all[0])],
+          ],
+        });
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
 
         // Greedily wraps this duty's duty places into lines that fit
@@ -680,32 +720,25 @@ pdfBtn.addEventListener('click', () => {
           return lines;
         }
 
-        const subColWidth = 130;
         const wrapWidth = subColWidth - CELL_SIDE_PAD * 2;
         const layouts = all.map((d) => wrapDutyPlaces(d.dutyPlaces || [], wrapWidth));
 
-        const body = all.map((d, i) => [
-          String(i + 1),
-          prettyRange(d.dateRange).replace(' \u2192 ', ' to '),
-          d.dutyType || 'Night Duty',
-          STATUS_LABEL[d.status] || d.status,
-          { content: '', styles: { minCellHeight: layouts[i].length * LINE_HEIGHT + CELL_TOP_PAD } },
-        ]);
-
-        doc.setFontSize(14);
-        doc.text(`My Duties - ${user.first_name} (${user.roll_no})`, 14, 15);
-        doc.setFontSize(10);
-        doc.text(`${all.length} duty assignment${all.length === 1 ? '' : 's'}`, 14, 21);
-        doc.setFontSize(8);
+        const body = all.map((d, i) => {
+          const row = [String(i + 1), rangeOf(d)];
+          if (showType) row.push(typeOf(d));
+          if (showStatus) row.push(statusOf(d));
+          row.push({ content: '', styles: { minCellHeight: layouts[i].length * LINE_HEIGHT + CELL_TOP_PAD } });
+          return row;
+        });
 
         doc.autoTable({
-          startY: 26,
+          startY,
           theme: 'grid',
-          head: [['#', 'Duty Date Range', 'Duty Type', 'Status', 'Duty Places (tick = scanned)']],
+          head: [head],
           body,
           styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
           headStyles: { fillColor: [18, 33, 58] },
-          columnStyles: { [ICON_COLUMN]: { cellWidth: subColWidth } },
+          columnStyles,
           didDrawCell: (data) => {
             if (data.section !== 'body' || data.column.index !== ICON_COLUMN) return;
             doc.setFontSize(8);
@@ -915,7 +948,7 @@ pdfBtn.addEventListener('click', () => {
       dateTimer = setTimeout(loadLogs, 200);
     });
     // ---------- Download PDF: mirrors the on-screen table (merged cells) ----------
-    pdfBtn.addEventListener('click', () => {
+    pdfBtn.addEventListener('click', async () => {
       if (!loaded.duties.length) {
         alert('Nothing to export.');
         return;
@@ -925,14 +958,25 @@ pdfBtn.addEventListener('click', () => {
         return;
       }
 
+      // Duty date range / duty type that are the same on every duty are printed once
+      // in the header instead of on every row; if they differ the column stays.
+      const rangeText = d => String(d.dateRange || '').replace('_', ' to ');
+      const typeText = d => d.dutyType || 'Night Duty';
+      const allSame = (fn) => loaded.duties.every(d => fn(d) === fn(loaded.duties[0]));
+      // With the "All" filter the duties span different dates/types, so those columns
+      // always stay in the table (they say which duty each row belongs to) and the
+      // header reads "All dates" / "All" instead of one duty's values.
+      const showRange = !loaded.byDate || !allSame(rangeText);
+      const showType = !loaded.byDate || !allSame(typeText);
+
       const rows = groupLogRows(loaded.duties);
       const body = rows.map(r => {
         const row = [];
         if (r.first) {
           row.push({ content: String(r.groupIndex), rowSpan: r.span, styles: { valign: 'top' } });
           // Plain "to" - the PDF's built-in font has no arrow glyph.
-          row.push({ content: String(r.group.dateRange || '').replace('_', ' to '), rowSpan: r.span, styles: { valign: 'top' } });
-          row.push({ content: r.group.dutyType || 'Night Duty', rowSpan: r.span, styles: { valign: 'top' } });
+          if (showRange) row.push({ content: rangeText(r.group), rowSpan: r.span, styles: { valign: 'top' } });
+          if (showType) row.push({ content: typeText(r.group), rowSpan: r.span, styles: { valign: 'top' } });
         }
         row.push(String(r.subIndex));
         row.push(r.sub.name);
@@ -943,22 +987,40 @@ pdfBtn.addEventListener('click', () => {
         return row;
       });
 
-      const scope = loaded.byDate ? `Duty date ${prettyDateStr(loaded.date)}` : 'All dates';
-      const doc = new jspdf.jsPDF({ orientation: 'landscape' });
-      doc.setFontSize(14);
-      doc.text(`Logs/Data - ${user.first_name} (${user.roll_no})`, 14, 15);
-      doc.setFontSize(10);
+      const head = ['#'];
+      const widths = [10];
+      if (showRange) { head.push('Duty Date Range'); widths.push(34); }
+      if (showType) { head.push('Duty Type'); widths.push(26); }
+      head.push('Place #', 'Duty Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates');
+      widths.push(18, 'auto', 28, 44, 44);
+      const columnStyles = {};
+      widths.forEach((w, i) => { columnStyles[i] = { cellWidth: w }; });
+
       const pdfSubs = loaded.duties.flatMap(d => d.dutyPlaces || []);
-      doc.text(`${scope}  |  ${pdfSubs.filter(sp => sp.scanned).length} of ${pdfSubs.length} duty places scanned`, 14, 21);
+      const scannedCount = pdfSubs.filter(sp => sp.scanned).length;
+      const doc = new jspdf.jsPDF({ orientation: 'landscape', format: 'a4' });
+      const startY = await drawAusReportHeader(doc, {
+        title: 'Logs/Data Report',
+        subtitle: ['Duty', 'Watch'],
+        meta: [
+          ['Guard', `${user.first_name} (${user.roll_no})`],
+          ['Duty Date', loaded.byDate ? prettyDateStr(loaded.date) : 'All dates'],
+          ['Duty Type', !showType ? typeText(loaded.duties[0]) : (loaded.byDate ? 'Day & Night' : 'All')],
+          ['Generated On', fmtDateTime(new Date().toISOString())],
+          ['Total Duties', loaded.duties.length],
+          ['Total Duty Places', pdfSubs.length],
+          ['Scanned', scannedCount],
+          ['Not Scanned', pdfSubs.length - scannedCount],
+        ],
+      });
       doc.autoTable({
-        startY: 26,
+        startY,
         theme: 'grid',
-        head: [['#', 'Duty Date Range', 'Duty Type', 'Place #', 'Duty Place', 'Status', 'Scanned At (Timeline)', 'Geo-Coordinates']],
+        head: [head],
         body,
         styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90] },
         headStyles: { fillColor: [18, 33, 58] },
-        // keep the time and coordinates on one line each (no wrapping mid-value)
-        columnStyles: { 6: { cellWidth: 'wrap' }, 7: { cellWidth: 'wrap' } },
+        columnStyles,
       });
       doc.save(`logs_${user.roll_no}_${loaded.byDate ? loaded.date : 'all'}.pdf`);
     });

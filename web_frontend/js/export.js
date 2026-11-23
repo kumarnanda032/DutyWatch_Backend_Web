@@ -41,7 +41,7 @@ function exportRowsToExcel(rows, { filename, sheetName = 'Sheet1' } = {}) {
  * @param {string} opts.filename   Download filename, e.g. "duties.pdf".
  * @param {string} [opts.title]    Optional heading printed above the table.
  */
-function exportRowsToPdf(columns, rows, { filename, title } = {}) {
+async function exportRowsToPdf(columns, rows, { filename, title, header, columnStyles, didParseCell } = {}) {
   if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
     alert('The PDF export library did not load. Check your internet connection and try again.');
     return;
@@ -51,9 +51,12 @@ function exportRowsToPdf(columns, rows, { filename, title } = {}) {
     return;
   }
 
-  const doc = new jspdf.jsPDF({ orientation: 'landscape' });
+  const doc = new jspdf.jsPDF({ orientation: 'landscape', format: 'a4' });
   let startY = 10;
-  if (title) {
+  if (header) {
+    // Aditya University report header ({ title, subtitle, meta }) - see drawAusReportHeader
+    startY = await drawAusReportHeader(doc, header);
+  } else if (title) {
     doc.setFontSize(14);
     doc.text(title, 14, 15);
     startY = 22;
@@ -61,13 +64,103 @@ function exportRowsToPdf(columns, rows, { filename, title } = {}) {
 
   doc.autoTable({
     startY,
+    theme: 'grid',
     head: [columns.map((c) => c.header)],
     body: rows.map((r) => columns.map((c) => (r[c.key] ?? ''))),
-    styles: { fontSize: 8 },
+    styles: { fontSize: 8, lineWidth: 0.1, lineColor: [38, 56, 90], valign: 'middle' },
     headStyles: { fillColor: [18, 33, 58] },
+    ...(columnStyles ? { columnStyles } : {}),
+    ...(didParseCell ? { didParseCell } : {}),
   });
 
   doc.save(filename);
+}
+
+/**
+ * Aditya University report header for jsPDF (logo on the left, report title on
+ * the right, a rule, then a grid of "Label: value" summary items).
+ *
+ *   const startY = await drawAusReportHeader(doc, {
+ *     title: 'Security Guard QR Scan Report',
+ *     subtitle: ['Duty', 'Watch'],             // orange + blue words
+ *     meta: [['Date', '2026-11-23'], ...],     // laid out 4 per row
+ *   });
+ *   doc.autoTable({ startY, ... });
+ *
+ * Returns the Y position (mm) where the table should start.
+ */
+async function drawAusReportHeader(doc, { title, subtitle = [], meta = [], logoUrl = 'images/aus_logo.png' } = {}) {
+  const ORANGE = [244, 123, 32];
+  const BLUE = [11, 79, 156];
+  const NAVY = [15, 27, 46];
+  const GREY = [75, 85, 99];
+  const pageW = doc.internal.pageSize.getWidth();
+  const left = 14;
+  const right = pageW - 14;
+
+  // Logo (900x117 source). If it fails to load, fall back to coloured text.
+  const logoW = 78;
+  const logoH = logoW * 117 / 900;
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('logo not found'));
+      el.src = logoUrl;
+    });
+    doc.addImage(img, 'PNG', left, 9, logoW, logoH);
+  } catch (err) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(...ORANGE); doc.text('ADITYA', left, 18);
+    doc.setTextColor(...BLUE); doc.text('UNIVERSITY', left + doc.getTextWidth('ADITYA ') + 2, 18);
+  }
+
+  // Title (right aligned)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...NAVY);
+  doc.text(title || '', right, 15, { align: 'right' });
+
+  // Coloured subtitle words, e.g. "Duty" (orange) + "Watch" (blue)
+  if (subtitle.length) {
+    doc.setFontSize(12);
+    const gap = doc.getTextWidth(' ');
+    const widths = subtitle.map((w) => doc.getTextWidth(w));
+    let x = right - (widths.reduce((a, b) => a + b, 0) + gap * (subtitle.length - 1));
+    subtitle.forEach((w, i) => {
+      doc.setTextColor(...(i % 2 === 0 ? ORANGE : BLUE));
+      doc.text(w, x, 22);
+      x += widths[i] + gap;
+    });
+  }
+
+  // Rule
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.7);
+  doc.line(left, 26, right, 26);
+
+  // Summary grid: 4 items per row
+  const perRow = 4;
+  const colW = (right - left) / perRow;
+  let y = 33;
+  meta.forEach(([label, value], i) => {
+    const col = i % perRow;
+    if (i > 0 && col === 0) y += 7;
+    const x = left + col * colW;
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...GREY);
+    const lbl = `${label}:`;
+    doc.text(lbl, x, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...NAVY);
+    doc.text(String(value ?? ''), x + doc.getTextWidth(lbl) + 3, y);
+  });
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  return y + 6;
 }
 
 /**
@@ -116,7 +209,7 @@ function loadSquareImageAsDataUrl(url, size = 128) {
  * @param {string} opts.filename
  * @param {string} [opts.title]
  */
-async function exportSecurityDataToPdf(users, { filename, title = 'Security Information' } = {}) {
+async function exportSecurityDataToPdf(users, { filename, title = 'Security Information Report', generatedBy = '', search = '' } = {}) {
   if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
     alert('The PDF export library did not load. Check your internet connection and try again.');
     return;
@@ -152,13 +245,27 @@ async function exportSecurityDataToPdf(users, { filename, title = 'Security Info
   ]);
 
   const doc = new jspdf.jsPDF({ orientation: 'landscape' });
-  doc.setFontSize(14);
-  doc.text(title, 14, 15);
-  doc.setFontSize(10);
-  doc.text(`${users.length} account${users.length === 1 ? '' : 's'}`, 14, 21);
+
+  const adminCount = users.filter((u) => u.role === 'admin').length;
+  const guardCount = users.filter((u) => u.role === 'security').length;
+  const blockedCount = users.filter((u) => u.blocked).length;
+  const startY = await drawAusReportHeader(doc, {
+    title,
+    subtitle: ['Duty', 'Watch'],
+    meta: [
+      ['Total Accounts', users.length],
+      ['Admins', adminCount],
+      ['Generated On', formatDateTime(new Date().toISOString())],
+      ['Generated By', generatedBy || '—'],
+      ['Security Guards', guardCount],
+      ['Active', users.length - blockedCount],
+      ['Blocked', blockedCount],
+      ['Search', search ? `"${search}"` : 'All accounts'],
+    ],
+  });
 
   doc.autoTable({
-    startY: 26,
+    startY,
     theme: 'grid',
     head: [['#', 'Photo', 'Name', 'Roll No', 'Role', 'Gender', 'Mobile', 'Designation', 'Status', 'Added On']],
     body,

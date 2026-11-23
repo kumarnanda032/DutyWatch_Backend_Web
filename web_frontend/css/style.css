@@ -1932,3 +1932,102 @@ body.home-night { --amber: #9da4ff; --amber-dark: #7f87f0; --amber-soft: rgba(15
    so repeat the padding here to keep the text clear of the left icon. */
 .data-toolbar .icon-field input[type="date"] { padding: 9px 14px 9px 42px; min-width: 150px; }
 .data-toolbar .icon-field select { padding: 9px 36px 9px 42px; }
+
+/* ---------- Edit duty assignment popup: themed by duty type (Day = amber, Night = indigo) ---------- */
+.modal-box.edit-duty-modal {
+  max-width: 480px;
+  padding: 0 0 22px;
+  border-top: 4px solid var(--dt-accent);
+  background:
+    linear-gradient(180deg, var(--dt-soft) 0, transparent 140px),
+    var(--navy-900);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--dt-soft);
+  animation: noticePop 0.18s ease-out;
+}
+.edit-duty-modal > *:not(.eda-head) { margin-left: 24px; margin-right: 24px; }
+
+.edit-duty-modal .eda-head { display: flex; align-items: center; gap: 14px; padding: 22px 24px 4px; }
+.edit-duty-modal .eda-head-icon {
+  flex: none; width: 44px; height: 44px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--dt-accent); color: var(--dt-on);
+}
+.edit-duty-modal .eda-head-icon svg { width: 22px; height: 22px; }
+.edit-duty-modal .eda-head-text { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.edit-duty-modal .eda-head-text h3 { margin: 0; font-size: 19px; }
+.edit-duty-modal .eda-type-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px;
+  border: 1px solid var(--dt-accent); border-radius: 999px;
+  background: var(--dt-soft); color: var(--dt-accent);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
+}
+.edit-duty-modal .eda-type-pill svg { width: 13px; height: 13px; }
+
+.edit-duty-modal .eda-note {
+  display: flex; gap: 8px; align-items: flex-start;
+  margin-top: 14px; margin-bottom: 14px; padding: 9px 12px;
+  border-left: 3px solid var(--dt-accent); border-radius: 6px;
+  background: var(--dt-soft); color: var(--ink-300);
+  font-size: 12.5px; line-height: 1.45;
+}
+.edit-duty-modal .eda-note svg { flex: none; margin-top: 2px; color: var(--dt-accent); }
+
+.edit-duty-modal .eda-summary {
+  border: 1px solid var(--dt-accent); border-radius: var(--radius);
+  background: var(--navy-800); overflow: hidden; margin-bottom: 16px;
+}
+.edit-duty-modal .eda-label { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dt-accent); margin-bottom: 2px; }
+.edit-duty-modal .eda-guard { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--navy-line); }
+.edit-duty-modal .eda-avatar {
+  flex: none; width: 38px; height: 38px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--dt-soft); color: var(--dt-accent); border: 1px solid var(--dt-accent);
+  font-weight: 700; font-size: 16px;
+}
+.edit-duty-modal .eda-guard-text { display: flex; flex-direction: column; min-width: 0; }
+.edit-duty-modal .eda-guard-text b { color: var(--ink-100); font-size: 14.5px; }
+.edit-duty-modal .eda-guard-text small { color: var(--ink-500); font-size: 12px; }
+.edit-duty-modal .eda-meta { display: grid; grid-template-columns: 1fr 1fr; }
+.edit-duty-modal .eda-meta > div { padding: 10px 14px; }
+.edit-duty-modal .eda-meta > div + div { border-left: 1px solid var(--navy-line); }
+.edit-duty-modal .eda-meta b { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-100); font-size: 13.5px; }
+.edit-duty-modal .eda-meta b svg { color: var(--dt-accent); }
+
+.edit-duty-modal .eda-places-label { display: flex; justify-content: space-between; align-items: center; }
+.edit-duty-modal .eda-count {
+  padding: 1px 9px; border-radius: 999px; background: var(--dt-soft); color: var(--dt-accent);
+  font-size: 11.5px; font-weight: 700; text-transform: none; letter-spacing: 0;
+}
+.edit-duty-modal .place-check-list { border-color: var(--dt-accent); max-height: 200px; }
+.edit-duty-modal .place-check-list label.place-check-row { border-radius: 6px; transition: background 0.12s; }
+.edit-duty-modal .place-check-list label.place-check-row:hover { background: var(--dt-soft); }
+.edit-duty-modal .place-check-list label.place-check-row.is-checked { background: var(--dt-soft); color: var(--dt-accent); font-weight: 600; }
+.edit-duty-modal .place-check-list input[type="checkbox"] { accent-color: var(--dt-accent); }
+.edit-duty-modal .place-check-list::-webkit-scrollbar-thumb { background: var(--dt-accent); border-radius: 6px; }
+
+.edit-duty-modal .btn-primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--dt-accent); }
+.edit-duty-modal .btn-primary:focus-visible,
+.edit-duty-modal .btn-outline:focus-visible { outline: 2px solid var(--dt-accent); outline-offset: 2px; }
+
+@media (max-width: 520px) {
+  .modal-box.edit-duty-modal { padding-bottom: 16px; }
+  .edit-duty-modal > *:not(.eda-head) { margin-left: 16px; margin-right: 16px; }
+  .edit-duty-modal .eda-head { padding: 18px 16px 4px; }
+  .edit-duty-modal .eda-meta { grid-template-columns: 1fr; }
+  .edit-duty-modal .eda-meta > div + div { border-left: 0; border-top: 1px solid var(--navy-line); }
+}
+
+/* ---------- Assigned duties table: date badge follows duty-type colour ---------- */
+.badge.date-badge { display: inline-block; line-height: 1.35; white-space: nowrap; text-align: left; }
+:root[data-theme="light"] .badge-night { background: rgba(91, 98, 214, 0.14); color: #5b62d6; }
+
+/* ---------- Remove-duty confirm popup: themed by duty type ---------- */
+.notice-box.confirm-themed { border-top: 4px solid var(--dt-accent); max-width: 420px;
+  background: linear-gradient(180deg, var(--dt-soft) 0, transparent 130px), var(--navy-900); }
+.notice-box.confirm-themed .notice-icon { background: var(--dt-accent); color: var(--dt-on); }
+.notice-box.confirm-themed h3 { color: var(--ink-100); }
+.confirm-badge { display: inline-block; margin: 0 0 12px; padding: 2px 12px; border: 1px solid var(--dt-accent); border-radius: 999px;
+  background: var(--dt-soft); color: var(--dt-accent); font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; }
+.confirm-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-height: 120px; overflow-y: auto; margin: -8px 0 20px; }
+.notice-box.confirm-themed .btn-outline:hover { border-color: var(--dt-accent); color: var(--dt-accent); }
+.notice-box.confirm-themed .btn-outline:focus-visible { outline: 2px solid var(--dt-accent); outline-offset: 2px; }

@@ -27,9 +27,14 @@ function loadImageAsync(src) {
 // undefined (reading 'length')" instead of picking a size. So instead we
 // try increasing type numbers ourselves until one is large enough to hold
 // the text at error-correction level H, which is the standard workaround.
+// MIN_QR_TYPE: even a short name (e.g. "Academy") is encoded on a finer grid
+// (version 6 = 41x41 modules) so the logo's clear zone is a small, tidy circle
+// instead of swallowing a big share of a coarse code. Any scanner reads the
+// same text from it - only the module size changes.
+const MIN_QR_TYPE = 6;
 function makeQrCode(text) {
   let lastErr;
-  for (let type = 1; type <= 40; type++) {
+  for (let type = MIN_QR_TYPE; type <= 40; type++) {
     try {
       const qr = qrcode(type, 'H');
       qr.addData(text);
@@ -50,13 +55,13 @@ function makeQrCode(text) {
  *   pixels - drives how crisp the QR (and the embedded logo) look once
  *   scaled into the on-screen preview or a printed PDF. Higher = sharper.
  * @param {number} [opts.marginCells=4] Quiet-zone width, in modules.
- * @param {number} [opts.logoRatio=0.22] Logo width as a fraction of the whole QR.
+ * @param {number} [opts.logoRatio=0.3] Logo width as a fraction of the QR modules area (quiet zone excluded).
  * @returns {HTMLCanvasElement}
  */
 function generateQrCanvas(text, logoImg, opts = {}) {
   const targetSize = opts.targetSize || 1000;
   const marginCells = opts.marginCells != null ? opts.marginCells : 4;
-  const logoRatio = opts.logoRatio || 0.22;
+  const logoRatio = opts.logoRatio || 0.3;
 
   const qr = makeQrCode(text);
   const moduleCount = qr.getModuleCount();
@@ -88,10 +93,12 @@ function generateQrCanvas(text, logoImg, opts = {}) {
   }
 
   if (logoImg) {
-    const logoSize = size * logoRatio;
+    const logoSize = moduleCount * cellSize * logoRatio;
     const cx = size / 2;
     const cy = size / 2;
-    const backdropR = logoSize / 2 + cellSize * 0.6;
+    // Clear white circle just a little bigger than the logo's own outer ring,
+    // so the modules are cut away in a clean round shape right around it.
+    const backdropR = logoSize / 2 + cellSize * 0.5;
 
     ctx.beginPath();
     ctx.arc(cx, cy, backdropR, 0, Math.PI * 2);
@@ -119,7 +126,7 @@ function generateQrCanvas(text, logoImg, opts = {}) {
  * @param {string} [opts.subCaption] Optional smaller line printed above the caption (the main place name).
  * @param {string} opts.filename
  */
-function exportQrCodeToPdf({ dataUrl, caption, subCaption, filename }) {
+async function exportQrCodeToPdf({ dataUrl, caption, subCaption, filename, title = 'Duty Place QR Code', logoUrl = 'images/aus_logo.png' }) {
   if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
     alert('The PDF export library did not load. Check your internet connection and try again.');
     return;
@@ -128,9 +135,42 @@ function exportQrCodeToPdf({ dataUrl, caption, subCaption, filename }) {
   const doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
 
+  // ---- Aditya University header: logo (left), title + "Duty Watch" (right), rule ----
+  const ORANGE = [244, 123, 32];
+  const BLUE = [11, 79, 156];
+  const NAVY = [15, 27, 46];
+  const marginX = 40;
+  const logoW = 215;
+  const logoH = logoW * 117 / 900;
+  try {
+    const logo = await loadImageAsync(logoUrl);
+    doc.addImage(logo, 'PNG', marginX, 30, logoW, logoH);
+  } catch (err) {
+    // logo missing - fall back to coloured text so the header never breaks
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(...ORANGE); doc.text('ADITYA', marginX, 52);
+    doc.setTextColor(...BLUE); doc.text('UNIVERSITY', marginX + doc.getTextWidth('ADITYA ') + 4, 52);
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(...NAVY);
+  doc.text(title, pageWidth - marginX, 44, { align: 'right' });
+  doc.setFontSize(11);
+  const subWords = ['Duty', 'Watch'];
+  const subGap = doc.getTextWidth(' ');
+  const subWidths = subWords.map((w) => doc.getTextWidth(w));
+  let subX = pageWidth - marginX - (subWidths[0] + subWidths[1] + subGap);
+  doc.setTextColor(...ORANGE); doc.text(subWords[0], subX, 60);
+  subX += subWidths[0] + subGap;
+  doc.setTextColor(...BLUE); doc.text(subWords[1], subX, 60);
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(1);
+  doc.line(marginX, 76, pageWidth - marginX, 76);
+
   const qrSize = 260;
   const qrX = (pageWidth - qrSize) / 2;
-  const qrY = 130;
+  const qrY = 324;
   const framePad = 24;
   const frameR = 20;
 
