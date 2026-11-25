@@ -93,7 +93,7 @@ function clearSession() {
 
 function logout() {
   clearSession();
-  window.location.href = '/';
+  window.location.replace('/');
 }
 
 /**
@@ -117,7 +117,7 @@ async function verifySessionStillValid() {
     // can't be verified, so don't trust it - one fresh login fixes it.
     clearSession();
     alert('Please log in again to continue.');
-    window.location.href = '/';
+    window.location.replace('/');
     return false;
   }
 
@@ -125,7 +125,7 @@ async function verifySessionStillValid() {
   if (result.ok === false) {
     clearSession();
     alert(result.message || 'Your session is no longer valid. Please log in again.');
-    window.location.href = '/';
+    window.location.replace('/');
     return false;
   }
   if (result.ok === true) {
@@ -137,9 +137,23 @@ async function verifySessionStillValid() {
 function requireRole(role) {
   const u = currentUser();
   if (!u || u.role !== role || !getAuthToken()) {
-    window.location.href = '/';
+    window.location.replace('/');
   }
+  // Back / Forward can show this page again from the browser's cache without
+  // running any script. If the person has signed out meanwhile, send them to
+  // the login page instead of showing the old screen.
+  window.addEventListener('pageshow', function (e) {
+    const cur = currentUser();
+    if (e.persisted && (!cur || cur.role !== role || !getAuthToken())) {
+      window.location.replace('/');
+    }
+  });
   return u;
+}
+
+/** Where a signed-in person belongs (used by the login page). */
+function homeFor(user) {
+  return user && user.role === 'admin' ? '/admin' : '/user';
 }
 
 

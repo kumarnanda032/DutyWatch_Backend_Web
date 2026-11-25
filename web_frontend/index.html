@@ -18,6 +18,27 @@
     }
   })();
 </script>
+<script>
+  /* Already signed in? Never show the login page (Back / Forward arrows,
+     typing the address): go straight to the person's own page. */
+  (function () {
+    function signedInHome() {
+      try {
+        var u = JSON.parse(sessionStorage.getItem('asg_user') || 'null');
+        if (u && sessionStorage.getItem('asg_token')) return u.role === 'admin' ? '/admin' : '/user';
+      } catch (e) {}
+      return null;
+    }
+    var home = signedInHome();
+    if (home) { location.replace(home); return; }
+    /* Page restored from the browser cache (Forward / Back) after a login in
+       another step: check again. */
+    window.addEventListener('pageshow', function (e) {
+      var h = signedInHome();
+      if (e.persisted && h) location.replace(h);
+    });
+  })();
+</script>
 <link rel="stylesheet" href="css/style.css?v=login-card-10" />
 <link rel="stylesheet" href="css/animations.css?v=anim-2" />
 </head>
@@ -149,8 +170,8 @@
 
 <script src="js/lightning.js"></script>
 <script src="js/animations.js?v=anim-1"></script>
-<script src="js/data.js"></script>
-<script src="js/api.js"></script>
+<script src="js/data.js?v=nav-1"></script>
+<script src="js/api.js?v=nav-1"></script>
 <script>
   document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -171,7 +192,7 @@
     try {
       const user = await loginViaApi(rollNo, password);
       setCurrentUser(user, user.token); // login token only - the password is never stored in the browser
-      window.location.href = user.role === 'admin' ? '/admin' : '/user';
+      window.location.replace(user.role === 'admin' ? '/admin' : '/user'); // replace: the login page is not left behind in history
     } catch (err) {
       errorText.textContent = err.message || 'Invalid employee ID or password.';
     } finally {

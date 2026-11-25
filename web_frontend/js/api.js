@@ -54,7 +54,7 @@ async function apiFetch(url, options) {
       _sessionEnding = true;
       clearSession();
       alert('Your session has expired or the account is no longer active. Please log in again.');
-      window.location.href = '/';
+      window.location.replace('/');
     }
   }
   return res;

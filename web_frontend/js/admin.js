@@ -227,7 +227,7 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
 const renderers = {
   home: () => `
     <div class="dash-stats">
-      <div class="dash-card">
+      <div class="dash-card dash-card-link" id="guardsCard" role="link" tabindex="0" title="Open Security Information">
         <div class="dash-num" id="guardsCountStat">…</div>
         <div class="dash-text">
           <span class="dash-label">Guards Registered</span>
@@ -235,7 +235,7 @@ const renderers = {
         </div>
         <span class="dash-icon tone-amber"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
       </div>
-      <div class="dash-card">
+      <div class="dash-card dash-card-link" id="dutyPlacesCard" role="link" tabindex="0" title="Open Existing Duty Places">
         <div class="dash-num" id="dutyPlacesCountStat">…</div>
         <div class="dash-text">
           <span class="dash-label">Duty Places</span>
@@ -243,7 +243,7 @@ const renderers = {
         </div>
         <span class="dash-icon tone-purple"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span>
       </div>
-      <div class="dash-card">
+      <div class="dash-card dash-card-link" id="qrScansCard" role="button" tabindex="0" title="Refresh today's QR scans">
         <div class="dash-num" id="qrScansTodayStat">…</div>
         <div class="dash-text">
           <span class="dash-label">QR Scans Today</span>
@@ -251,7 +251,7 @@ const renderers = {
         </div>
         <span class="dash-icon tone-amber"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"/><path d="M8 12h8"/></svg></span>
       </div>
-      <div class="dash-card">
+      <div class="dash-card dash-card-link" id="todayDutiesCard" role="link" tabindex="0" title="Open Show Assigned Duties">
         <div class="dash-num" id="todayDutiesStat">…</div>
         <div class="dash-text">
           <span class="dash-label">Today's Assigned Duties</span>
@@ -733,6 +733,67 @@ function attachHandlers(section) {
   }
 
   if (section === 'home') {
+    // Guards Registered card -> Security Data > Security Information tab.
+    const guardsCard = document.getElementById('guardsCard');
+    if (guardsCard) {
+      const openSecurityInfo = () => {
+        document.querySelectorAll('.nav-link[data-section]').forEach(n => n.classList.remove('active'));
+        const nav = document.querySelector('.nav-link[data-section="securityData"]');
+        if (nav) nav.classList.add('active');
+        render('securityData');
+        const infoTab = document.querySelector('#securityDataTabs .tab-btn[data-tab="securityInfo"]');
+        if (infoTab) infoTab.click();
+      };
+      guardsCard.addEventListener('click', openSecurityInfo);
+      guardsCard.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSecurityInfo(); }
+      });
+    }
+
+    // QR Scans Today card -> stay on Home and reload every number and the table.
+    const qrCard = document.getElementById('qrScansCard');
+    if (qrCard) {
+      const refreshHome = () => render('home');
+      qrCard.addEventListener('click', refreshHome);
+      qrCard.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); refreshHome(); }
+      });
+    }
+
+    // Today's Assigned Duties card -> Assign Duty > Show Assigned Duties tab.
+    const dutiesCard = document.getElementById('todayDutiesCard');
+    if (dutiesCard) {
+      const openShowAssigned = () => {
+        document.querySelectorAll('.nav-link[data-section]').forEach(n => n.classList.remove('active'));
+        const nav = document.querySelector('.nav-link[data-section="dutyStatus"]');
+        if (nav) nav.classList.add('active');
+        render('dutyStatus');
+        const tab = document.querySelector('#dutyStatusTabs .tab-btn[data-tab="showAssigned"]');
+        if (tab) tab.click();
+      };
+      dutiesCard.addEventListener('click', openShowAssigned);
+      dutiesCard.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openShowAssigned(); }
+      });
+    }
+
+    // Duty Places card -> Duty Places > Existing Duty Places tab.
+    const placesCard = document.getElementById('dutyPlacesCard');
+    if (placesCard) {
+      const openExistingPlaces = () => {
+        document.querySelectorAll('.nav-link[data-section]').forEach(n => n.classList.remove('active'));
+        const nav = document.querySelector('.nav-link[data-section="addDutyPlaces"]');
+        if (nav) nav.classList.add('active');
+        render('addDutyPlaces');
+        const tab = document.querySelector('#dutyPlaceTabs .tab-btn[data-tab="existingPlaces"]');
+        if (tab) tab.click();
+      };
+      placesCard.addEventListener('click', openExistingPlaces);
+      placesCard.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openExistingPlaces(); }
+      });
+    }
+
     fetchUsersViaApi({ role: 'security', limit: 1 })
       .then(res => { document.getElementById('guardsCountStat').textContent = res.total; })
       .catch(() => { document.getElementById('guardsCountStat').textContent = '—'; });
