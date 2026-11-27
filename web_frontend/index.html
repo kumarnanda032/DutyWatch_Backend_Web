@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Aditya Security Guard — Sign In</title>
+<title>Aditya Security Guard — Login</title>
 <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png?v=dw2" />
 <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192.png?v=dw2" />
 <link rel="icon" type="image/x-icon" href="favicon.ico?v=dw2" />
@@ -40,20 +40,23 @@
   })();
 </script>
 <link rel="stylesheet" href="css/fonts.css?v=stem-1" />
-<link rel="stylesheet" href="css/style.css?v=login-card-10" />
+<link rel="stylesheet" href="css/style.css?v=login-card-15" />
 <link rel="stylesheet" href="css/animations.css?v=anim-2" />
 </head>
 <body>
 
 <div class="login-shell">
-  <canvas id="lightningCanvas" class="lightning-canvas" aria-hidden="true"></canvas>
   <div class="login-panel">
     <div class="login-card">
-      <div class="login-icon">
-        <img src="images/dutywatch_logo.png" alt="DutyWatch" />
+      <div class="login-head">
+        <div class="login-icon">
+          <img src="images/dutywatch_logo.png" alt="DutyWatch" />
+        </div>
+        <div class="login-brand">Aditya Security Guard</div>
+        <p class="login-tagline">Guard duty &amp; QR patrol monitoring</p>
       </div>
-      <div class="login-brand">Aditya Security Guard</div>
-      <h2>Sign in</h2>
+      <div class="login-body">
+      <h2>Login</h2>
       <p class="lead">Enter your employee ID to continue.</p>
 
       <form id="loginForm">
@@ -78,6 +81,7 @@
 
         <button type="submit" class="btn btn-primary">Log in</button>
       </form>
+      </div>
     </div>
   </div>
 
@@ -169,7 +173,6 @@
   </div>
 </div>
 
-<script src="js/lightning.js"></script>
 <script src="js/animations.js?v=anim-1"></script>
 <script src="js/data.js?v=nav-1"></script>
 <script src="js/api.js?v=nav-1"></script>
@@ -188,7 +191,7 @@
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Signing in...';
+    submitBtn.textContent = 'Logging in...';
 
     try {
       const user = await loginViaApi(rollNo, password);

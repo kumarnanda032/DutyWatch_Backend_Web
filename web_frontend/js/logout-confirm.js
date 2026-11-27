@@ -16,7 +16,7 @@ function confirmLogout(onYes) {
           '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>' +
       '</div>' +
       '<h3 id="logoutConfirmTitle">Log out?</h3>' +
-      '<p id="logoutConfirmMsg">Are you sure you want to log out? You will need to sign in again to continue.</p>' +
+      '<p id="logoutConfirmMsg">Are you sure you want to log out? You will need to log in again to continue.</p>' +
       '<div class="modal-actions logout-confirm-actions">' +
         '<button type="button" class="btn btn-outline" id="logoutNoBtn">No</button>' +
         '<button type="button" class="btn" id="logoutYesBtn">Yes, Log out</button>' +
