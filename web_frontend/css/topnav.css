@@ -1,0 +1,566 @@
+/* =====================================================================
+   Top navigation layout (desktop)
+
+   The left side panel is now a horizontal bar that sits directly under
+   the header. Only layout/appearance changes live here: the HTML, the
+   element ids and every JavaScript behaviour are untouched.
+
+   - Hamburger button still works: it switches the bar between
+     "icons + labels" and "icons only" (remembered, as before).
+   - Phones / small tablets (<= 900px) keep the existing slide-over menu.
+   ===================================================================== */
+@media (min-width: 901px) {
+
+  /* Shell: header, nav bar, content stacked top to bottom */
+  body.has-topbar .app-shell,
+  body.has-topbar .app-shell.sidebar-collapsed {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    grid-template-rows: none;
+  }
+  /* <main> stops being a box so the header and the content become direct
+     children of the shell and the nav bar can sit between them. */
+  body.has-topbar .app-shell > .main { display: contents; }
+  body.has-topbar .app-shell > .topbar { order: 1; flex: none; }
+  body.has-topbar .app-shell > .sidebar { order: 2; }
+  body.has-topbar .app-shell > .sidebar-backdrop { order: 3; }
+  body.has-topbar .app-shell > .main > .content,
+  body.has-topbar .app-shell .content {
+    order: 4;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow-y: auto;
+  }
+
+  /* The bar itself */
+  body.has-topbar .app-shell .sidebar,
+  body.has-topbar .app-shell.sidebar-collapsed .sidebar {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    height: auto;
+    width: auto;
+    position: relative;
+    top: auto;
+    z-index: 4;
+    padding: 6px 26px;
+    border-right: 0;
+    border-bottom: 1px solid var(--navy-line);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    animation: anim-fade-in 0.4s ease both;
+  }
+  body.has-topbar .app-shell .sidebar > * { animation: none; }
+
+  /* Group headings become thin dividers between groups */
+  body.has-topbar .app-shell .sidebar .nav-group-label,
+  body.has-topbar .app-shell.sidebar-collapsed .sidebar .nav-group-label {
+    flex: none;
+    font-size: 0;
+    width: 1px;
+    height: 22px;
+    padding: 0;
+    margin: 0 8px;
+    background: var(--navy-line);
+  }
+  body.has-topbar .app-shell .sidebar .brand + .nav-group-label { display: none; }
+
+  /* Links */
+  body.has-topbar .app-shell .sidebar .nav-link,
+  body.has-topbar .app-shell:not(.sidebar-collapsed) .sidebar .nav-link:hover {
+    flex: none;
+    gap: 8px;
+    padding: 9px 12px;
+    white-space: nowrap;
+  }
+  body.has-topbar .app-shell.sidebar-collapsed .sidebar .nav-link {
+    justify-content: center;
+    padding: 9px 11px;
+  }
+  body.has-topbar .app-shell .sidebar .nav-link.active { background: var(--amber-soft); }
+  /* the old left-edge marker becomes an underline under the active link */
+  body.has-topbar .app-shell .sidebar .nav-link::before {
+    left: 12px; right: 12px;
+    top: auto; bottom: -6px;
+    width: auto; height: 3px;
+    border-radius: 3px 3px 0 0;
+    transform: scaleX(0);
+  }
+  body.has-topbar .app-shell .sidebar .nav-link.active::before { transform: scaleX(1); }
+
+  /* Contact Us + Logout go to the right-hand end */
+  body.has-topbar .app-shell .sidebar .sidebar-footer {
+    order: 99;
+    flex: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border-top: 0;
+  }
+
+  /* Name / photo / Emp ID chip sits at the far right */
+  body.has-topbar .app-shell .sidebar .brand,
+  body.has-topbar .app-shell.sidebar-collapsed .sidebar .brand {
+    order: 100;
+    flex: none;
+    justify-content: flex-start;
+    gap: 10px;
+    margin: 0 0 0 12px;
+    padding: 0 0 0 14px;
+    border-bottom: 0;
+    border-left: 1px solid var(--navy-line);
+  }
+  body.has-topbar .app-shell .sidebar .brand .avatar-lg { width: 34px; height: 34px; font-size: 15px; }
+  body.has-topbar .app-shell .sidebar .brand-text,
+  body.has-topbar .app-shell .sidebar .guard-brand-text { max-width: 160px; }
+  body.has-topbar .app-shell .sidebar .guard-brand .guard-name,
+  body.has-topbar .app-shell .sidebar .brand .brand-text span { font-size: 13.5px; }
+}
+
+/* Narrower laptops / tablets: icons only (hover shows the name) so the whole
+   bar always fits without scrolling. */
+@media (min-width: 901px) and (max-width: 1260px) {
+  body.has-topbar .app-shell .sidebar .nav-label { display: none; }
+  body.has-topbar .app-shell .sidebar .nav-link { justify-content: center; padding: 9px 11px; }
+  body.has-topbar .app-shell .sidebar .brand-text,
+  body.has-topbar .app-shell .sidebar .guard-brand-text { display: none; }
+}
+
+
+/* =====================================================================
+   Hover menu for each header item's tabs (desktop only)
+   ===================================================================== */
+@media (min-width: 901px) {
+  /* The page's own tab strip is replaced by the hover menu. The buttons
+     stay in the page (hidden), so every tab handler keeps working. */
+  #imagesTabs,
+  #securityDataTabs,
+  #dutyPlaceTabs,
+  #dutyStatusTabs,
+  #accountTabs { display: none !important; }
+
+  /* small arrow on header items that open a menu (only when labels show) */
+  body.has-topbar .app-shell:not(.sidebar-collapsed) .sidebar .nav-link[data-has-menu]::after {
+    content: "";
+    width: 6px; height: 6px;
+    margin-left: 2px;
+    border-right: 1.6px solid currentColor;
+    border-bottom: 1.6px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    opacity: 0.7;
+    flex: none;
+  }
+
+  .tabmenu {
+    position: fixed;
+    z-index: 40;
+    min-width: 230px;
+    padding: 6px;
+    background: var(--navy-900);
+    border: 1px solid var(--navy-line);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.14s ease, transform 0.14s ease;
+  }
+  .tabmenu[hidden] { display: none; }
+  .tabmenu.is-open { opacity: 1; transform: none; }
+
+  .tabmenu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-300);
+    font: inherit;
+    font-size: 13.5px;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .tabmenu-item svg { flex: none; opacity: 0.9; }
+  .tabmenu-item:hover,
+  .tabmenu-item:focus-visible { background: var(--navy-800); color: var(--ink-100); outline: none; }
+  .tabmenu-item.is-active { background: var(--amber-soft); color: var(--amber); font-weight: 400; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabmenu { transition: none; }
+}
+/* ---------- profile hover menu (Contact Us / Logout) ---------- */
+@media (min-width: 901px) {
+  body.admin-ui .sidebar .brand { cursor: pointer; }
+  body.admin-ui .sidebar .brand::after {
+    content: ""; width: 7px; height: 7px; flex: none; margin-left: 2px;
+    border-right: 1.6px solid var(--ink-300); border-bottom: 1.6px solid var(--ink-300);
+    transform: translateY(-2px) rotate(45deg); opacity: .7;
+  }
+  .profilemenu {
+    position: fixed; z-index: 45; min-width: 190px; padding: 6px;
+    background: var(--navy-900); border: 1px solid var(--navy-line); border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .35);
+    opacity: 0; transform: translateY(-4px);
+    transition: opacity .14s ease, transform .14s ease;
+  }
+  .profilemenu[hidden] { display: none; }
+  .profilemenu.is-open { opacity: 1; transform: none; }
+  .profilemenu-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 10px 12px; border: 0; border-radius: 8px; background: transparent;
+    color: var(--ink-300); font: inherit; font-size: 13.5px; text-align: left;
+    white-space: nowrap; cursor: pointer;
+  }
+  .profilemenu-item:hover, .profilemenu-item:focus-visible { background: var(--navy-800); color: var(--ink-100); outline: none; }
+  .profilemenu-item.is-danger { color: #e2574c; }
+  .profilemenu-item.is-danger:hover, .profilemenu-item.is-danger:focus-visible { background: rgba(226, 87, 76, .12); color: #ef6b60; }
+}
+@media (prefers-reduced-motion: reduce) { .profilemenu { transition: none; } }
+@media (max-width: 900px) { .profilemenu { display: none !important; } }
+/* phones: no hover menu, the in-page tabs stay as they were */
+@media (max-width: 900px) { .tabmenu { display: none !important; } }
+
+
+/* =====================================================================
+   ADMIN UI REFRESH  (body.admin-ui, admin.html only)
+   Centered header + centered nav row, amber accents, mono numbers,
+   restyled Home cards / toolbar / table. Look only: no behaviour changes.
+   Phones (<= 900px) keep their existing layout.
+   ===================================================================== */
+
+/* ---- fonts + dark palette ---- */
+body.admin-ui { font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+body.admin-ui h1, body.admin-ui h2, body.admin-ui h3, body.admin-ui .display {
+  font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif; letter-spacing: 0;
+}
+body.admin-ui .sidebar .brand span { font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+
+html:not([data-theme="light"]) body.admin-ui {
+  --navy-950: #060a14;
+  --navy-900: #0a1020;
+  --navy-800: #101935;
+  --navy-700: #182548;
+  --navy-line: #1a2540;
+  --amber: #fbbf24;
+  --amber-dark: #d99a06;
+  --amber-soft: rgba(251, 191, 36, 0.12);
+}
+/* night duty keeps its indigo accent */
+html:not([data-theme="light"]) body.admin-ui.home-night {
+  --amber: #9da4ff; --amber-dark: #7f87f0; --amber-soft: rgba(157, 164, 255, 0.14);
+}
+
+@media (min-width: 901px) {
+  body.admin-ui { --row-h: 58px; }
+
+  /* ONE header row: brand | nav (centered) | Light, Contact, Logout, user.
+     The topbar and the nav bar stop being boxes ("display: contents") so
+     their children become cells of the shell's grid. No markup moved. */
+  body.admin-ui .app-shell,
+  body.admin-ui .app-shell.sidebar-collapsed {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) repeat(6, auto) minmax(0, 1fr) auto auto auto auto;
+    grid-template-rows: var(--row-h) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 6px;
+    padding: 0 24px;
+  }
+  body.admin-ui .app-shell::before {      /* the row's background + bottom line */
+    content: ""; grid-column: 1 / -1; grid-row: 1; align-self: stretch;
+    margin: 0 -24px; background: var(--navy-900); border-bottom: 1px solid var(--navy-line);
+  }
+  body.admin-ui .topbar,
+  body.admin-ui .topbar-right,
+  body.admin-ui .sidebar { display: contents; }
+  body.admin-ui .app-shell .sidebar .sidebar-footer { display: contents; }
+  body.admin-ui .topbar-left,
+  body.admin-ui .sidebar .nav-group-label,
+  body.admin-ui .sidebar-backdrop,
+  body.admin-ui #homeDutyToggle { display: none !important; }   /* Day/Night lives in the toolbar now */
+
+  /* content takes row 2 */
+  body.admin-ui .app-shell > .main > .content,
+  body.admin-ui .app-shell .content {
+    grid-column: 1 / -1; grid-row: 2; align-self: stretch;
+    min-height: 0; overflow-y: auto; margin: 0 -24px; padding-left: 24px; padding-right: 24px;
+  }
+
+  /* ---------- brand (left) ---------- */
+  body.admin-ui .topbar-brand {
+    position: static; transform: none; max-width: none; pointer-events: auto;
+    grid-column: 1; grid-row: 1; gap: 11px; margin: 0;
+  }
+  body.admin-ui .topbar-brand .home-hero-logo {
+    width: 44px; height: 44px; padding: 3px; flex: none;
+    border-radius: 11px; border: 2px solid var(--amber);
+    background: #fff; box-shadow: 0 0 14px var(--amber-soft);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  body.admin-ui .topbar-brand .home-hero-logo img {
+    display: block; width: 100%; height: 100%; object-fit: contain;
+  }
+  body.admin-ui .topbar-brand .home-hero-logo::before { content: none; }
+  body.admin-ui .topbar-brand .home-hero-text h2 { font-size: 14.5px; font-weight: 400; line-height: 1.15; white-space: nowrap; }
+  body.admin-ui .topbar-brand .home-hero-text p { font-size: 11px; margin-top: 1px; color: var(--ink-500); white-space: nowrap; }
+
+  /* ---------- nav links (centered) ---------- */
+  body.admin-ui .app-shell .sidebar .nav-label { display: inline !important; }
+  body.admin-ui .app-shell .sidebar .nav-link,
+  body.admin-ui .app-shell:not(.sidebar-collapsed) .sidebar .nav-link:hover,
+  body.admin-ui .app-shell.sidebar-collapsed .sidebar .nav-link {
+    grid-row: 1; flex: none; position: relative;
+    padding: 0 13px; height: 32px; gap: 8px; margin: 0;
+    border: 1px solid transparent; border-radius: 8px;
+    font-size: 12.5px; font-weight: 400; color: var(--ink-100);
+    justify-content: flex-start; white-space: nowrap;
+  }
+  body.admin-ui .sidebar .nav-link[data-section="home"]          { grid-column: 3; }
+  body.admin-ui .sidebar .nav-link[data-section="images"]        { grid-column: 4; }
+  body.admin-ui .sidebar .nav-link[data-section="securityData"]  { grid-column: 5; }
+  body.admin-ui .sidebar .nav-link[data-section="addDutyPlaces"] { grid-column: 6; }
+  body.admin-ui .sidebar .nav-link[data-section="dutyStatus"]    { grid-column: 7; }
+  body.admin-ui .sidebar .nav-link[data-section="account"]       { grid-column: 8; }
+  body.admin-ui .sidebar .nav-link svg { width: 15px; height: 15px; opacity: .85; }
+  body.admin-ui .app-shell .sidebar .nav-link:hover { background: var(--navy-800); }
+  body.admin-ui .app-shell .sidebar .nav-link.active {
+    color: var(--amber); background: var(--amber-soft);
+    border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+  }
+  body.admin-ui .app-shell .sidebar .nav-link::before,
+  body.admin-ui .app-shell .sidebar .nav-link[data-has-menu]::after { display: none; }
+
+  /* ---------- right cluster: Light | Contact | Logout | user ---------- */
+  body.admin-ui .theme-toggle {
+    grid-column: 10; grid-row: 1; height: 34px; padding: 0 12px; border-radius: 10px;
+    background: var(--navy-950); font-size: 12px; white-space: nowrap;
+  }
+  /* Contact Us + Logout now live in the profile hover menu (profile-menu.js).
+     The real elements stay in the page (hidden) so every existing handler still runs. */
+  body.admin-ui .sidebar .sidebar-footer .nav-link { display: none !important; }
+  body.admin-ui .sidebar .sidebar-footer .nav-link { color: var(--ink-300); font-weight: 500; }
+  body.admin-ui .sidebar .sidebar-footer .nav-link:hover { color: var(--ink-100); background: transparent; }
+
+  body.admin-ui .app-shell .sidebar .brand,
+  body.admin-ui .app-shell.sidebar-collapsed .sidebar .brand {
+    grid-column: 13; grid-row: 1; position: relative;
+    margin: 0 0 0 8px; padding: 0 0 0 16px; width: auto; max-width: 190px;
+    display: flex; align-items: center; gap: 10px; border: 0;
+  }
+  body.admin-ui .sidebar .brand::before {
+    content: ""; position: absolute; left: 0; top: -2px; bottom: -2px; width: 1px; background: var(--navy-line);
+  }
+  body.admin-ui .app-shell .sidebar .brand-text { display: flex !important; flex-direction: column; min-width: 0; max-width: none; }
+  body.admin-ui .sidebar .brand-text span {
+    font-size: 12.5px; font-weight: 400; color: var(--ink-100);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.admin-ui .sidebar .brand-text small {
+    font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 10px; color: var(--ink-500); white-space: nowrap;
+  }
+  body.admin-ui .sidebar .brand .avatar {
+    background: linear-gradient(135deg, #14b8a6, #f59e0b); color: #fff;
+    box-shadow: 0 0 0 2px var(--navy-900), 0 0 0 3.5px var(--amber);
+    flex: none;
+  }
+
+  /* Day / Night control inside the Home toolbar */
+  body.admin-ui .duty-toggle-proxy { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--navy-950); gap: 2px; height: 38px; align-items: center; }
+  body.admin-ui .duty-toggle-proxy .duty-toggle-btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 400; }
+  body.admin-ui .duty-toggle-proxy .duty-toggle-btn.is-day.active { background: #f59e0b; color: #1a1205; }
+}
+
+/* ---- keep the single row on one line as the window gets narrower ---- */
+@media (min-width: 901px) and (max-width: 1599px) {
+  body.admin-ui .topbar-brand .home-hero-text p { display: none; }
+  body.admin-ui .sidebar .sidebar-footer .nav-label,
+  body.admin-ui .theme-toggle .theme-toggle-text { display: none !important; }
+  body.admin-ui .sidebar .sidebar-footer .nav-link { padding: 0 10px; }
+}
+@media (min-width: 901px) and (max-width: 1399px) {
+  body.admin-ui .app-shell .sidebar .nav-link { padding: 0 10px !important; gap: 7px; }
+}
+@media (min-width: 901px) and (max-width: 1279px) {
+  body.admin-ui .app-shell .sidebar .brand-text { display: none !important; }
+  body.admin-ui .app-shell .sidebar .brand { padding-left: 12px; }
+}
+@media (min-width: 901px) and (max-width: 1099px) {
+  body.admin-ui .topbar-brand .home-hero-text { display: none; }
+  body.admin-ui .app-shell .sidebar .nav-link .nav-label { display: none !important; }
+  body.admin-ui .app-shell .sidebar .nav-link { padding: 0 10px !important; }
+}
+
+/* ---------- Home: stat cards ---------- */
+body.admin-ui .dash-stats { gap: 16px; margin-bottom: 24px; }
+body.admin-ui .dash-card { border-radius: 14px; padding: 18px; gap: 12px; align-items: center; }
+body.admin-ui .dash-num {
+  font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 400; font-size: 32px; letter-spacing: -0.03em; min-width: 0;
+}
+body.admin-ui .dash-label { font-size: 11.5px; font-weight: 400; letter-spacing: 0.04em; color: var(--ink-100); margin-bottom: 3px; }
+body.admin-ui .dash-sub { font-size: 12px; }
+body.admin-ui .dash-icon { width: 40px; height: 40px; border-radius: 10px; align-self: center; border: 1px solid transparent; }
+body.admin-ui .dash-icon svg { width: 20px; height: 20px; }
+body.admin-ui .dash-icon.tone-amber  { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 40%, transparent); color: var(--amber); }
+body.admin-ui .dash-icon.tone-purple { background: rgba(99, 102, 241, 0.14); border-color: rgba(129, 140, 248, 0.40); color: #8b9cff; }
+body.admin-ui .dash-icon.tone-green  { background: rgba(34, 197, 94, 0.10);  border-color: rgba(52, 211, 153, 0.38); color: #34d399; }
+
+/* ---------- Home: QR scans card ---------- */
+body.admin-ui .card:has(#recentScansBody) { padding: 0; overflow: hidden; border-radius: 14px; }
+body.admin-ui .card:has(#recentScansBody) .scan-banner {
+  margin: 0; padding: 18px 28px;
+  border-left: 3px solid var(--amber);
+  border-bottom: 1px solid var(--navy-line);
+  background: linear-gradient(90deg, var(--amber-soft), transparent 55%), var(--navy-900);
+}
+body.admin-ui .scan-title-main { color: var(--amber); font-size: 15px; font-weight: 400; }
+body.admin-ui .scan-title-sep  { color: var(--ink-500); margin: 0 10px; }
+body.admin-ui .scan-title-duty { color: var(--ink-100); font-size: 15px; font-weight: 400; }
+
+/* date pill ("27-Nov-2026" + calendar) */
+body.admin-ui .date-pill {
+  position: relative; display: inline-flex; align-items: center; gap: 10px;
+  height: 34px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--navy-line); background: var(--navy-950); color: var(--amber);
+}
+body.admin-ui .date-pill-text { font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 0.02em; }
+body.admin-ui .date-pill:hover { border-color: var(--amber); }
+body.admin-ui .date-pill .recent-scans-date {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; padding: 0; border: 0;
+}
+
+/* toolbar */
+body.admin-ui .card:has(#recentScansBody) .data-toolbar { margin: 0; padding: 16px; border-bottom: 1px solid var(--navy-line); }
+body.admin-ui .data-toolbar .search-field input {
+  height: 38px; padding: 0 14px 0 38px; border-radius: 10px; font-size: 12.5px;
+  background: var(--navy-950) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237e8ba1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") 13px center / 16px no-repeat;
+}
+body.admin-ui .data-toolbar select {
+  height: 38px; padding: 0 12px; border-radius: 10px; font-size: 12.5px; background-color: var(--navy-950);
+}
+/* duty-type dropdown keeps room for its icon (left) and arrow (right) */
+body.admin-ui .data-toolbar .duty-type-wrap select { padding: 0 38px 0 40px; }
+body.admin-ui .data-toolbar .page-size-field select {
+  -webkit-appearance: none; appearance: none; width: 54px; padding: 0; text-align: center; text-align-last: center;
+  font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif; font-weight: 400;
+}
+body.admin-ui .data-toolbar .page-size-field label { font-size: 12px; }
+body.admin-ui .data-toolbar .btn-outline {
+  height: 38px; padding: 0 16px; border-radius: 10px; font-size: 12.5px; font-weight: 400;
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--ink-100); background: var(--navy-950);
+  border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent);
+}
+body.admin-ui .data-toolbar .btn-outline svg { color: var(--amber); }
+body.admin-ui .data-toolbar .btn-outline:hover { border-color: var(--amber); }
+
+/* table */
+body.admin-ui .recent-scans-table { border-collapse: collapse; }
+body.admin-ui .recent-scans-table th,
+body.admin-ui .recent-scans-table td { border-color: var(--navy-line); }
+body.admin-ui .recent-scans-table thead th {
+  padding: 14px 18px; font-size: 11px; font-weight: 400; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--amber); background: var(--navy-950);
+  border-bottom: 1px solid var(--navy-line);
+}
+body.admin-ui .recent-scans-table td { padding: 8px 18px; font-size: 12.5px; }
+body.admin-ui .recent-scans-table td.preserve-space { font-weight: 400; }
+body.admin-ui .recent-scans-table td.serial-col { color: var(--ink-500); font-size: 11.5px; }
+body.admin-ui .recent-scans-table th.status-col,
+body.admin-ui .recent-scans-table td.status-col { text-align: left; }
+body.admin-ui .recent-scans-table tbody td[rowspan]:not(.serial-col) { font-weight: 400; }
+/* amber dot before guard name removed */
+body.admin-ui .recent-scans-table tbody td[rowspan]:not(.serial-col)::before { content: none; display: none; }
+body.admin-ui .status-pill { padding: 4px 12px; font-size: 11.5px; font-weight: 400; background: rgba(255, 255, 255, 0.03); }
+body.admin-ui .status-pill.is-scanned { background: rgba(34, 197, 94, 0.12); }
+
+/* footer */
+body.admin-ui .card:has(#recentScansBody) .pagination-bar { margin: 0; padding: 14px 20px; border-top: 0; }
+body.admin-ui .pagination-bar .page-info { color: var(--ink-300); }
+body.admin-ui .pagination-bar .page-info b { color: var(--ink-100); font-weight: 400; }
+body.admin-ui .pagination-bar .btn-outline { border-radius: 8px; font-size: 12px; background: var(--navy-950); }
+
+.duty-toggle-proxy { display: none; }
+@media (min-width: 901px) { body.admin-ui .duty-toggle-proxy { display: inline-flex; } }
+
+/* ---------- Images page: current action label ---------- */
+.tab-indicator { display: none; }
+@media (min-width: 901px) {
+  .tab-indicator {
+    display: flex; align-items: center; justify-content: flex-start; gap: 8px;
+    width: max-content; max-width: 100%; margin: 0 0 22px; padding: 7px 16px;
+    border-radius: 999px; font-size: 13px; font-weight: 400;
+    color: var(--amber); background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+  }
+  .tab-indicator.is-centered { margin-left: auto; margin-right: auto; }
+  .tab-indicator svg { flex: none; }
+}
+
+/* ---------- centered page titles + narrow cards (all admin pages) ---------- */
+@media (min-width: 901px) {
+  body.admin-ui .section-head { text-align: center; }
+  body.admin-ui #content .card[style*="max-width"] { margin-left: auto; margin-right: auto; }
+  body.admin-ui #content .card[style*="max-width"]:not([style*="margin:24px"]) { margin-top: 24px; }
+}
+
+@media (min-width: 901px) {
+  /* tighten the gap between the page subtitle and the current-action label */
+  body.admin-ui .section-head.has-indicator { margin-bottom: 8px; }
+}
+
+/* Set Scan Time: Day / Night cards centered under the title */
+@media (min-width: 901px) {
+  body.admin-ui .st-grid { justify-content: center; }
+}
+
+/* =====================================================================
+   Security (guard) page: same header as the admin page.
+   user.html carries body.admin-ui.guard-ui; the guard menu has 4 items
+   (Home, Images, Logs/Data, Personal Data) instead of the admin's 6.
+   ===================================================================== */
+@media (min-width: 901px) {
+  body.admin-ui.guard-ui .app-shell,
+  body.admin-ui.guard-ui .app-shell.sidebar-collapsed {
+    grid-template-columns: auto minmax(0, 1fr) repeat(4, auto) minmax(0, 1fr) auto auto auto auto;
+  }
+  body.admin-ui.guard-ui .sidebar .nav-link[data-section="home"]    { grid-column: 3; }
+  body.admin-ui.guard-ui .sidebar .nav-link[data-section="images"]  { grid-column: 4; }
+  body.admin-ui.guard-ui .sidebar .nav-link[data-section="logs"]    { grid-column: 5; }
+  body.admin-ui.guard-ui .sidebar .nav-link[data-section="account"] { grid-column: 6; }
+  body.admin-ui.guard-ui .theme-toggle { grid-column: 8; }
+  body.admin-ui.guard-ui .app-shell .sidebar .brand,
+  body.admin-ui.guard-ui .app-shell.sidebar-collapsed .sidebar .brand { grid-column: 11; }
+
+  /* name + Emp ID next to the photo (guard markup uses its own class names) */
+  body.admin-ui.guard-ui .sidebar .guard-brand-text { min-width: 0; max-width: none; }
+  body.admin-ui.guard-ui .sidebar .guard-brand-text .guard-name {
+    display: block; font-size: 12.5px; font-weight: 400; color: var(--ink-100);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.admin-ui.guard-ui .sidebar .guard-brand-text small {
+    display: block; font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 10px; color: var(--ink-500); white-space: nowrap;
+  }
+}
+@media (min-width: 1280px) {
+  body.admin-ui.guard-ui .app-shell .sidebar .guard-brand-text { display: flex !important; flex-direction: column; }
+}
+
+/* filter dropdowns with a leading icon (e.g. Logs/Data "Date" / "All") keep room for it */
+body.admin-ui .data-toolbar .icon-field select { padding: 0 36px 0 42px; }
+body.admin-ui .data-toolbar .icon-field input[type="date"] { height: 38px; padding: 0 14px 0 42px; }
+
+/* guard Logs/Data: no amber dots next to the date range / duty type */
+body.admin-ui.guard-ui .recent-scans-table tbody td[rowspan]:not(.serial-col)::before { content: none; display: none; }

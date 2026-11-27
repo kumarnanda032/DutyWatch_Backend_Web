@@ -1,0 +1,16 @@
+/* Stem font family (self-hosted). Weights mapped from file names. */
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Hairline.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Thin.otf') format('opentype'); font-weight: 200; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-ExtraLight.otf') format('opentype'); font-weight: 250; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-ExtraLightItalic.otf') format('opentype'); font-weight: 250; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Stem'; src: url('../fonts/Stem-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+
+/* No bold anywhere: normalise default-bold elements */
+b, strong, th, h1, h2, h3, h4, h5, h6, optgroup, dt, legend { font-weight: 400; }

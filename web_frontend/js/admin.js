@@ -262,7 +262,7 @@ const renderers = {
     </div>
     <div class="card">
       <div class="card-title scan-banner" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-        <span id="recentScansHeading">Today's QR Code Scanned Data · ${homeDutyType}</span>
+        <span id="recentScansHeading"><span class="scan-title-main">Today's QR Code Scanned Data</span><span class="scan-title-sep">·</span><span class="scan-title-duty">${homeDutyType}</span></span>
         <input type="date" class="recent-scans-date" id="recentScansDate" value="${todayISODate()}" max="${todayISODate()}">
       </div>
       <div class="data-toolbar">
@@ -284,7 +284,7 @@ const renderers = {
             <option value="scanned">Scanned</option>
             <option value="not-scanned">Not scanned</option>
           </select>
-          <button class="btn btn-outline" id="downloadRecentScansPdfBtn" type="button">⬇ Download PDF</button>
+          <button class="btn btn-outline btn-with-icon" id="downloadRecentScansPdfBtn" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Download PDF</span></button>
         </div>
       </div>
       <div class="table-scroll">
@@ -314,7 +314,7 @@ const renderers = {
   `,
 
   images: () => `
-    ${sectionHead('Images', 'Upload site-visit photo evidence and review what has been submitted.')}
+    <div class="section-head" style="text-align:center;"><h2>Images</h2><p>Upload site-visit photo evidence and review what has been submitted.</p></div>
 
     <div class="tabs" id="imagesTabs">
       <button class="tab-btn active" data-tab="uploadImage" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span>Upload Image</span></button>
@@ -322,7 +322,10 @@ const renderers = {
     </div>
 
     <div class="tab-panel" id="tab-uploadImage">
-      <div class="card" style="max-width:420px;">
+      <div class="card" style="max-width:420px; margin:24px auto 0;">
+        <p style="color:var(--ink-300); font-size:12.5px; line-height:1.5; margin:0 0 14px; text-align:center;">
+          Found a problem at a duty place? Pick the photo you already took, describe the problem, then upload.
+        </p>
         <div class="image-tile" style="margin-bottom:14px;"><div class="ph" style="height:160px;">🖼</div></div>
         <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" style="display:none;">
         <div style="display:flex; gap:10px;">
@@ -460,7 +463,7 @@ const renderers = {
   `,
 
   addDutyPlaces: () => `
-    ${sectionHead('Duty Places', 'Add the places guards are assigned to. Each duty place has its own QR code.')}
+    <div class="section-head" style="text-align:center;"><h2>Duty Places</h2><p>Add the places guards are assigned to. Each duty place has its own QR code.</p></div>
 
     <div class="tabs" id="dutyPlaceTabs">
       <button class="tab-btn active" data-tab="newPlace" type="button"><svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg><span>Add Duty Place</span></button>
@@ -469,7 +472,7 @@ const renderers = {
     </div>
 
     <div class="tab-panel" id="tab-newPlace">
-      <div class="card" style="max-width:520px;">
+      <div class="card" style="max-width:520px; margin:24px auto 0;">
         <div class="card-title title-with-badge"><span class="title-badge tone-amber"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0112 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg></span><span>Add Duty Place</span></div>
         <div class="field"><label>Duty place</label><div class="input-icon"><svg class="field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg><input id="dutyPlaceNameInput" placeholder="e.g. North Gate" /></div></div>
         <div class="error-text" id="newPlaceError"></div>
@@ -508,7 +511,7 @@ const renderers = {
     </div>
 
     <div class="tab-panel" id="tab-generateQr" style="display:none;">
-      <div class="card" style="max-width:480px;">
+      <div class="card" style="max-width:480px; margin:24px auto 0;">
         <div class="card-title title-with-badge"><span class="title-badge tone-teal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg></span><span>Generate a QR code for a duty place</span></div>
         <div class="field" style="margin-bottom:0;">
           <label>Duty place</label>
@@ -517,7 +520,7 @@ const renderers = {
         <div class="error-text" id="qrGenerateError"></div>
       </div>
 
-      <div class="card" id="qrPreviewCard" style="max-width:420px; display:none; text-align:center;">
+      <div class="card" id="qrPreviewCard" style="max-width:420px; margin-left:auto; margin-right:auto; display:none; text-align:center;">
         <div class="card-title title-with-badge" style="text-align:left;"><span class="title-badge tone-teal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Preview</span></div>
         <div id="qrPreviewWrap" style="display:flex; flex-direction:column; align-items:center; gap:10px;"></div>
         <button class="btn btn-primary btn-with-icon" id="downloadQrPdfBtn" type="button" style="width:auto; padding:10px 22px; margin-top:18px;" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Download as PDF</span></button>
@@ -924,7 +927,7 @@ function attachHandlers(section) {
       const { page, limit } = recentScansState;
       const from = total === 0 ? 0 : (page - 1) * limit + 1;
       const to = Math.min(page * limit, total);
-      document.getElementById('recentScansPageInfo').textContent = total === 0 ? '' : `Showing ${from}-${to} of ${total}`;
+      document.getElementById('recentScansPageInfo').innerHTML = total === 0 ? '' : `Showing <b>${from}-${to}</b> of <b>${total}</b>`;
       document.getElementById('recentScansPrevBtn').disabled = page <= 1;
       document.getElementById('recentScansNextBtn').disabled = page >= totalPages;
     }
@@ -1005,9 +1008,13 @@ function attachHandlers(section) {
     function updateRecentScansHeading(date) {
       const heading = document.getElementById('recentScansHeading');
       if (!heading) return;
-      heading.textContent = date === todayISODate()
-        ? `Today's QR Code Scanned Data · ${homeDutyType}`
-        : `${formatIsoDateDisplay(date)} QR Code Scanned Data · ${homeDutyType}`;
+      const mainText = date === todayISODate()
+        ? "Today's QR Code Scanned Data"
+        : `${formatIsoDateDisplay(date)} QR Code Scanned Data`;
+      heading.innerHTML =
+        `<span class="scan-title-main">${escapeHtml(mainText)}</span>` +
+        `<span class="scan-title-sep">·</span>` +
+        `<span class="scan-title-duty">${escapeHtml(homeDutyType)}</span>`;
     }
 
     function loadRecentScans(date) {
@@ -2450,7 +2457,7 @@ function attachHandlers(section) {
 
         previewWrap.innerHTML = `
           <div class="qr-frame"><img src="${dataUrl}" alt="QR code" style="display:block; width:220px; height:220px;" /></div>
-          <div class="preserve-space" style="font-size:16px; font-weight:700;">${escapeHtml(place.place)}</div>
+          <div class="preserve-space" style="font-size:16px; font-weight: 400;">${escapeHtml(place.place)}</div>
         `;
         document.getElementById('downloadQrPdfBtn').disabled = false;
       } catch (err) {
