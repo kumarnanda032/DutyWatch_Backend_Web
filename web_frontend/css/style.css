@@ -1340,7 +1340,7 @@ tr:last-child td { border-bottom: none; }
 /* ---------- Sidebar: name with Emp ID underneath ---------- */
 .sidebar .brand .brand-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
 .sidebar .brand .brand-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sidebar .brand .brand-text small { font-size: 11.5px; font-weight: 500; color: var(--ink-500); }
+.sidebar .brand .brand-text small { font-size: 11.5px; font-weight: 400; color: var(--ink-500); }
 
 /* ---------- Light / Dark switch (sidebar, above Logout) ---------- */
 .theme-switch {

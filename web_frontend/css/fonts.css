@@ -1,16 +1,14 @@
-/* Stem font family (self-hosted). Weights mapped from file names. */
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Hairline.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Thin.otf') format('opentype'); font-weight: 200; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-ExtraLight.otf') format('opentype'); font-weight: 250; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-ExtraLightItalic.otf') format('opentype'); font-weight: 250; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-LightItalic.otf') format('opentype'); font-weight: 300; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Italic.otf') format('opentype'); font-weight: 400; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Stem'; src: url('../fonts/Stem-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; font-display: swap; }
+/* Stem Regular - the only font file used in this project. */
+@font-face {
+  font-family: 'Stem';
+  src: url('../fonts/Stem-Regular.otf') format('opentype');
+  font-weight: 100 900;   /* every weight maps to Regular, no faux bold */
+  font-style: normal;
+  font-display: swap;
+}
 
-/* No bold anywhere: normalise default-bold elements */
+/* One weight, one style everywhere */
+html, body, button, input, select, textarea { font-family: 'Stem', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { font-synthesis: none; }
 b, strong, th, h1, h2, h3, h4, h5, h6, optgroup, dt, legend { font-weight: 400; }
+em, i, cite, address, dfn { font-style: normal; }

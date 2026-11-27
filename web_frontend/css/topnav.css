@@ -347,7 +347,7 @@ html:not([data-theme="light"]) body.admin-ui.home-night {
   /* Contact Us + Logout now live in the profile hover menu (profile-menu.js).
      The real elements stay in the page (hidden) so every existing handler still runs. */
   body.admin-ui .sidebar .sidebar-footer .nav-link { display: none !important; }
-  body.admin-ui .sidebar .sidebar-footer .nav-link { color: var(--ink-300); font-weight: 500; }
+  body.admin-ui .sidebar .sidebar-footer .nav-link { color: var(--ink-300); font-weight: 400; }
   body.admin-ui .sidebar .sidebar-footer .nav-link:hover { color: var(--ink-100); background: transparent; }
 
   body.admin-ui .app-shell .sidebar .brand,
@@ -564,3 +564,22 @@ body.admin-ui .data-toolbar .icon-field input[type="date"] { height: 38px; paddi
 
 /* guard Logs/Data: no amber dots next to the date range / duty type */
 body.admin-ui.guard-ui .recent-scans-table tbody td[rowspan]:not(.serial-col)::before { content: none; display: none; }
+
+/* =====================================================================
+   Side spacing
+   --hside : header row (logo left / user right) sits near the browser edges
+   --side  : page content is narrower (capped at 1400px, centered)
+   ===================================================================== */
+body.admin-ui {
+  --hside: 20px;
+  --side: max(clamp(24px, 5vw, 96px), calc((100vw - 1400px) / 2));
+}
+@media (min-width: 901px) {
+  body.admin-ui .app-shell,
+  body.admin-ui .app-shell.sidebar-collapsed { padding: 0 var(--hside); }
+  body.admin-ui .app-shell::before { margin: 0 calc(-1 * var(--hside)); }
+  body.admin-ui .app-shell > .main > .content,
+  body.admin-ui .app-shell .content {
+    margin: 0 calc(-1 * var(--hside)); padding-left: var(--side); padding-right: var(--side);
+  }
+}
