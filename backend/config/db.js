@@ -17,7 +17,7 @@ function buildUri() {
 
   const host = process.env.MONGO_HOST || '127.0.0.1';
   const port = process.env.MONGO_PORT || '27017';
-  const dbName = process.env.MONGO_DB || 'security_guard_db';
+  const dbName = process.env.MONGO_DB || 'duty_watch_db';
   const user = process.env.MONGO_USER;
   const pass = process.env.MONGO_PASSWORD;
   const authSource = process.env.MONGO_AUTH_SOURCE || 'admin';
